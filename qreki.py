@@ -1,22 +1,19 @@
-# coding: utf-8
-
-from __future__ import division
 import math
 import datetime
 
-u"""新暦、旧暦変換スクリプト
+"""新暦、旧暦変換スクリプト
 
-Arrenged by fgshun 2009
+Arrenged by fgshun 2009, 2017
     (http://d.hatena.ne.jp/fgshun/)
 
 使用例
 >>> from qreki import Kyureki
 >>> k = Kyureki.from_ymd(2009, 11, 27)
->>> print repr(k)
+>>> print(repr(k))
 Kyureki(2009, 10, 0, 11)
->>> print k
+>>> print(k)
 2009年10月11日
->>> print k.rokuyou()
+>>> print(k.rokuyou())
 友引
 >>> k.year, k.month, k.leap_month, k.day
 (2009, 10, 0, 11)
@@ -67,10 +64,10 @@ JAVA
     http://homepage1.nifty.com/ave/kaihatsu/qreki.htm
 """
 
-VERSION_INFO = (0, 4, 7)
-VERSION = u'.'.join(map(unicode, VERSION_INFO))
+VERSION_INFO = (0, 5, 0)
+VERSION = '.'.join(map(str, VERSION_INFO))
 ORGINAL_VERSION_INFO = (1, 1)
-ORGINAL_VERSION = u'.'.join(map(unicode, ORGINAL_VERSION_INFO))
+ORGINAL_VERSION = '.'.join(map(str, ORGINAL_VERSION_INFO))
 
 DEG_TO_RAD = math.pi / 180.0 # （角度の）度からラジアンに変換する係数
 TZ = 0.375 # +9.0/24.0 (JST)
@@ -80,11 +77,11 @@ __all__ = [
         'rokuyou_from_ymd', 'rokuyou_from_date']
 
 class Kyureki(tuple):
-    u"""旧暦を表すクラス"""
+    """旧暦を表すクラス"""
 
     __slots__ = ()
 
-    ROKUYOU = (u'大安', u'赤口', u'先勝', u'友引', u'先負', u'仏滅')
+    ROKUYOU = ('大安', '赤口', '先勝', '友引', '先負', '仏滅')
 
     def __new__(cls, year, month, leap_month, day):
         return super(Kyureki, cls).__new__(
@@ -92,46 +89,46 @@ class Kyureki(tuple):
 
     @classmethod
     def from_ymd(cls, year, month, day, tz=TZ):
-        u"""新暦を表す 3 整数より旧暦を得る"""
+        """新暦を表す 3 整数より旧暦を得る"""
 
         date = datetime.date(year, month, day)
         return cls.from_date(date, tz)
 
     @classmethod
     def from_date(cls, date, tz=TZ):
-        u"""datetime.date より旧暦を得る"""
+        """datetime.date より旧暦を得る"""
         jd = date2jd(date)
         kyureki =  kyureki_from_jd(jd, tz, (date.year, date.month))
         return cls(*kyureki)
 
     @property
     def year(self):
-        u"""旧暦の年"""
+        """旧暦の年"""
 
         return self[0]
 
     @property
     def month(self):
-        u"""旧暦の月"""
+        """旧暦の月"""
 
         return self[1]
 
     @property
     def leap_month(self):
-        u"""閏月フラグ
-        
+        """閏月フラグ
+
         0 ならば通常の月、 1 ならば閏月を表す。"""
 
         return self[2]
 
     @property
     def day(self):
-        u"""旧暦の日"""
+        """旧暦の日"""
 
         return self[3]
 
     def rokuyou(self):
-        u"""六曜を得る
+        """六曜を得る
 
         戻り値は六曜 (大安, 赤口, 先勝, 友引, 先負, 仏滅) の文字列。"""
 
@@ -142,24 +139,18 @@ class Kyureki(tuple):
                 self.__class__.__name__,
                 self.year, self.month, self.leap_month, self.day)
 
-    def __unicode__(self):
-        return u'%d年%s%d月%d日' % (
+    def __str__(self):
+        return '%d年%s%d月%d日' % (
                 self.year,
-                u'閏' if self.leap_month else u'',
+                '閏' if self.leap_month else '',
                 self.month,
                 self.day)
-
-    def __str__(self):
-        return str(self.__unicode__())
 
 kyureki_from_ymd = Kyureki.from_ymd
 kyureki_from_date = Kyureki.from_date
 
-# old name
-calc_kyureki = Kyureki.from_ymd
-
 def _kyureki_from_jd(tm, tz, shinreki_ym=None):
-    u"""新暦に対応する、旧暦を求める
+    """新暦に対応する、旧暦を求める
 
     引数:
         tm0: ローカル補正込みのユリウス通日
@@ -180,7 +171,7 @@ def _kyureki_from_jd(tm, tz, shinreki_ym=None):
     chu.append(before_nibun_from_jd(tm, tz))
 
     # 中気の時刻を計算
-    for i in xrange(1, 4):
+    for i in range(1, 4):
         chu.append(chuki_from_jd(chu[i - 1][0] + 32.0, tz))
 
     # 計算対象の直前にあたる二分二至の直前の朔の時刻を求める
@@ -188,7 +179,7 @@ def _kyureki_from_jd(tm, tz, shinreki_ym=None):
     saku.append(saku_from_jd(chu[0][0], tz))
 
     # 朔の時刻を求める
-    for i in xrange(1, 5):
+    for i in range(1, 5):
         saku.append(saku_from_jd(saku[i - 1] + 30.0, tz))
 
         if abs(int(saku[i - 1]) - int(saku[i])) <= 26:
@@ -202,7 +193,7 @@ def _kyureki_from_jd(tm, tz, shinreki_ym=None):
         # その際、計算もれ（saku[4]）になっている部分を補うため、
         # 朔の時刻を計算する。
         # （近日点通過の近辺で朔があると起こる事があるようだ...？）
-        for i in xrange(0, 4):
+        for i in range(0, 4):
             saku[i] = saku[i + 1]
         else:
             saku[4] = saku_from_jd(saku[3] + 35.0, tz)
@@ -212,7 +203,7 @@ def _kyureki_from_jd(tm, tz, shinreki_ym=None):
         # その際、計算もれ（saku[0]）になっている部分を補うため、
         # 朔の時刻を計算する。
         # （春分点の近辺で朔があると起こる事があるようだ...？）
-        for i in xrange(4, 0, -1):
+        for i in range(4, 0, -1):
             saku[i] = saku[i - 1]
         else:
             saku[0] = saku_from_jd(saku[0] - 27.0, tz)
@@ -227,14 +218,14 @@ def _kyureki_from_jd(tm, tz, shinreki_ym=None):
     # m[i][1] ... 閏フラグ（0:平月 1:閏月）
     # m[i][2] ... 朔日のjd
     m = []
-    for i in xrange(5):
+    for i in range(5):
         m.append([None, None, None])
 
     m[0][0] = int(chu[0][1] / 30.0) + 2
     m[0][1] = 0
     m[0][2] = int(saku[0])
 
-    for i in xrange(1, 5):
+    for i in range(1, 5):
         if leap == 1 and i != 1:
             if int(chu[i - 1][0]) <= int(saku[i - 1]) or \
                int(chu[i - 1][0]) >= int(saku[i]):
@@ -284,8 +275,8 @@ def _kyureki_from_jd(tm, tz, shinreki_ym=None):
     return kyureki_year, kyureki_month, kyureki_leap, kyureki_day
 
 def _chuki_from_jd(tm, tz):
-    u"""中気の時刻を求める
-    
+    """中気の時刻を求める
+
     引数:
         tm: 計算対象となる時刻（ローカル補正込みのユリウス通日）
         tz: タイムゾーン
@@ -337,7 +328,7 @@ def _chuki_from_jd(tm, tz):
     return (tm1 + tm2 + tz, rm_sun0)
 
 def _before_nibun_from_jd(tm, tz):
-    u"""直前の二分二至の時刻を求める
+    """直前の二分二至の時刻を求める
 
     引数:
         tm: 計算対象となる時刻（ローカル補正込みのユリウス通日）
@@ -393,7 +384,7 @@ def _before_nibun_from_jd(tm, tz):
     return (tm1 + tm2 + tz, rm_sun0)
 
 def _saku_from_jd(tm, tz):
-    u"""与えられた時刻の直近の朔の時刻（JST）を求める
+    """与えられた時刻の直近の朔の時刻（JST）を求める
 
     引数:
         tm: 計算対象となる時刻（ローカル補正込みのユリウス通日）
@@ -410,7 +401,7 @@ def _saku_from_jd(tm, tz):
     # （誤差が±1.0 sec以内になったら打ち切る。）
     delta_t1 = 0.0
     delta_t2 = 1.0
-    for lc in xrange(1, 30):
+    for lc in range(1, 30):
         # 太陽の黄経λsun ,月の黄経λmoon を計算
         # t = (tm - 2451548.0 + 0.5)/36525.0;
         t = (tm2 + 0.5) / 36525.0 + (tm1 - 2451545.0) / 36525.0
@@ -465,8 +456,8 @@ def _saku_from_jd(tm, tz):
     return tm1 + tm2 + tz
 
 def _longitude_of_sun(t):
-    u"""太陽の黄経 λsun を計算する
-    
+    """太陽の黄経 λsun を計算する
+
     引数:
         tm: 計算対象となる時刻 (AJD) / 36525.0
     戻り値:
@@ -517,8 +508,8 @@ def _longitude_of_sun(t):
     return th
 
 def _longitude_of_moon(t):
-    u"""月の黄経 λmoon を計算する
-    
+    """月の黄経 λmoon を計算する
+
     引数:
         tm: 計算対象となる時刻 (AJD) / 36525.0
     戻り値:
@@ -659,12 +650,12 @@ def _longitude_of_moon(t):
     return th
 
 def date2jd(date):
-    u"""datetime.date からローカル補正込みのユリウス通日を得る"""
+    """datetime.date からローカル補正込みのユリウス通日を得る"""
 
     return float(date.toordinal() + 1721424)
 
 def _jd2yearmonth(jd):
-    u"""ローカル補正込みのユリウス通日から年月を得る"""
+    """ローカル補正込みのユリウス通日から年月を得る"""
 
     f0 = math.floor(jd + 68570.0)
     f1 = math.floor(f0 / 36524.25)
@@ -705,13 +696,13 @@ except ImportError:
     jd2yearmonth = _jd2yearmonth
 
 def rokuyou_from_ymd(year, month, day):
-    u"""六曜算出ショートカット
+    """六曜算出ショートカット
 
     引数:
         新暦年月日
     戻り値:
         六曜 (大安, 赤口, 先勝, 友引, 先負, 仏滅) の文字列
-    
+
     六曜を求めるにあたって、旧暦を算出している。
     旧暦も必要とする場合、 Kyureki.from_ymd(year, month, day) で
     旧暦オブジェクトをつくり、
@@ -724,7 +715,7 @@ def rokuyou_from_ymd(year, month, day):
 get_rokuyou = rokuyou_from_ymd
 
 def rokuyou_from_date(date):
-    u"""六曜算出ショートカット
+    """六曜算出ショートカット
     引数:
         datetime.date （新暦）
     戻り値:
@@ -741,15 +732,15 @@ def rokuyou_from_date(date):
 def main():
     import optparse
 
-    usage = u'%prog [year, [month, [day]]]'
-    version = u'%%prog %s' % VERSION
+    usage = '%prog [year, [month, [day]]]'
+    version = '%%prog %s' % VERSION
     parser = optparse.OptionParser(usage=usage, version=version)
     option, args = parser.parse_args()
 
     try:
         def print_date(shinreki, kyureki):
-            print u'%d年%d月%d日 %s' % (
-                    shinreki.year, shinreki.month, shinreki.day, kyureki)
+            print('{0:d}年{1:d}月{2:d}日 {3}'.format(
+                    shinreki.year, shinreki.month, shinreki.day, kyureki))
 
         len_args = len(args)
 
@@ -782,10 +773,10 @@ def main():
             print_date(d, k)
 
         else:
-            parser.error(u'引数が多すぎます')
+            parser.error('引数が多すぎます')
 
-    except StandardError, e:
-        parser.error(unicode(e))
+    except Exception as e:
+        parser.error(str(e))
 
 if __name__ == '__main__':
     main()

@@ -6,7 +6,7 @@ ext_modules = [
 
 setup(
     name='qreki',
-    version='0.4.6',
+    version='0.5',
     description='Qreki',
     py_modules=py_modules,
     ext_modules=ext_modules)

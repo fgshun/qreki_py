@@ -205,7 +205,7 @@ chuki_from_jd2(
             tm1 -= 1.0;
         }
     }
-    
+
     *chuki = tm1 + tm2 + tz;
     *longitude = rm_sun0;
     return;
@@ -266,7 +266,7 @@ before_nibun_from_jd2(
             tm1 -= 1.0;
         }
     }
-    
+
     *nibun = tm1 + tm2 + tz;
     *longitude = rm_sun0;
     return;
@@ -340,7 +340,7 @@ saku_from_jd2(double tm, double tz, double *saku)
             break;
         }
     }
-    
+
     if (lc >= 30) {
         PyErr_SetString(PyExc_ValueError, "");
         return -1;
