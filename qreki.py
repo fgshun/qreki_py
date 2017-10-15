@@ -75,16 +75,21 @@ TZ = 0.375 # +9.0/24.0 (JST)
 __all__ = ['Kyureki', 'rokuyou_from_ymd', 'rokuyou_from_date']
 
 
-class Kyureki(tuple):
+class Kyureki:
     """旧暦を表すクラス"""
 
-    __slots__ = ()
+    __slots__ = ('_year', '_month', '_leap_month', '_day')
 
     ROKUYOU = ('大安', '赤口', '先勝', '友引', '先負', '仏滅')
 
     def __new__(cls, year, month, leap_month, day):
-        return super(Kyureki, cls).__new__(
-                cls, (year, month, leap_month, day))
+        self = object.__new__(cls)
+        self._year = year
+        self._month = month
+        self._leap_month = leap_month
+        self._day = day
+
+        return self
 
     @classmethod
     def from_ymd(cls, year, month, day, tz=TZ):
@@ -103,13 +108,13 @@ class Kyureki(tuple):
     def year(self):
         """旧暦の年"""
 
-        return self[0]
+        return self._year
 
     @property
     def month(self):
         """旧暦の月"""
 
-        return self[1]
+        return self._month
 
     @property
     def leap_month(self):
@@ -117,13 +122,13 @@ class Kyureki(tuple):
 
         0 ならば通常の月、 1 ならば閏月を表す。"""
 
-        return self[2]
+        return self._leap_month
 
     @property
     def day(self):
         """旧暦の日"""
 
-        return self[3]
+        return self._day
 
     def rokuyou(self):
         """六曜を得る
@@ -133,16 +138,16 @@ class Kyureki(tuple):
         return self.ROKUYOU[(self.month + self.day) % 6]
 
     def __repr__(self):
-        return '{:s}({:r}, {:r}, {:r}, {:r})'.format(
+        return '{:s}({:d}, {:d}, {:d}, {:d})'.format(
                 self.__class__.__name__,
-                self.year, self.month, self.leap_month, self.day)
+                self._year, self._month, self._leap_month, self._day)
 
     def __str__(self):
         return '{:d}年{:s}{:d}月{:d}日'.format(
-                self.year,
-                '閏' if self.leap_month else '',
-                self.month,
-                self.day)
+                self._year,
+                '閏' if self._leap_month else '',
+                self._month,
+                self._day)
 
 
 def kyureki_from_date(date, tz):
