@@ -149,7 +149,7 @@ def kyureki_from_date(date, tz):
     """新暦に対応する、旧暦を求める
 
     引数:
-        tm0: ローカル補正込みのユリウス通日
+        date: 新暦
         tz: タイムゾーン
     戻り値:
         旧暦を表すタプル
@@ -157,9 +157,9 @@ def kyureki_from_date(date, tz):
             1: 旧暦月
             2: 閏月フラグ (平月: 0, 閏月: 1）
             3: 旧暦日"""
-    tm = date2jd(date)
-
-    tm0 = int(tm)
+    # ローカル補正込みのユリウス通日
+    tm0 = date.toordinal() + 1721424
+    tm = float(tm0)
 
     # 計算対象の直前にあたる二分二至の時刻を求める
     # chu[0][0]:二分二至の時刻  chu[0][1]:その時の太陽黄経
@@ -644,12 +644,6 @@ def longitude_of_moon(t):
     th = (th + ang) % 360.0
 
     return th
-
-
-def date2jd(date):
-    """datetime.date からローカル補正込みのユリウス通日を得る"""
-
-    return float(date.toordinal() + 1721424)
 
 
 def jd2yearmonth(jd):

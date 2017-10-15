@@ -8,7 +8,7 @@ kyureki_from_jd_test(PyObject *self, PyObject *args, PyObject *kwargs);
 static double
 normalize_angle(double angle);
 static int
-kyureki_from_jd(double tm, double tz, int *kyureki_year, int *kyureki_month,
+kyureki_from_jd(int tm0, double tz, int *kyureki_year, int *kyureki_month,
                 int *kyureki_leap, int *kyureki_day);
 static void
 chuki_from_jd(double tm, double tz, double *chuki, double *longitude);
@@ -40,37 +40,49 @@ normalize_angle(double angle)
 
 
 static PyObject *
-kyureki_from_jd_test(PyObject *self, PyObject *args, PyObject *kwargs)
+kyureki_from_date(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-    static char *kwlist[] = {"tm", "tz", NULL};
-    double tm, tz;
+    static char *kwlist[] = {"date", "tz", NULL};
+    PyObject *date;
+    long ordinal, tm0;
+    double tz;
+    PyObject *ordinal_obj;
     int kyureki_year, kyureki_month, kyureki_leap, kyureki_day, error;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "dd", kwlist, &tm, &tz)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Od", kwlist, &date, &tz)) {
         return NULL;
     }
 
-    error = kyureki_from_jd(tm, tz, &kyureki_year, &kyureki_month,
+    if ((ordinal_obj = PyObject_CallMethod(date, "toordinal", NULL)) == NULL) {
+        return NULL;
+    }
+    ordinal = PyLong_AsLong(ordinal_obj);
+    Py_DECREF(ordinal_obj);
+    if (PyErr_Occurred()) { return NULL; }
+
+    tm0 = ordinal + 1721424;
+
+    error = kyureki_from_jd(tm0, tz, &kyureki_year, &kyureki_month,
                             &kyureki_leap, &kyureki_day);
-    if (error) { return NULL; }  /* TODO: raise ValueError */
+    if (error) { return NULL; }
 
     return Py_BuildValue("iiii", kyureki_year, kyureki_month, kyureki_leap,
                          kyureki_day);
 }
 
 static int
-kyureki_from_jd(double tm, double tz, int *kyureki_year, int *kyureki_month,
+kyureki_from_jd(int tm0, double tz, int *kyureki_year, int *kyureki_month,
                 int *kyureki_leap, int *kyureki_day)
 {
     int shinreki_year, shinreki_month;
-    int tm0;
+    double tm;
     double chu[4][2];
     double saku[5];
     int m[5][3];
     int leap;
     int i, state;
 
-    tm0 = (int)tm;
+    tm = (double)tm0;
 
     before_nibun_from_jd(tm, tz, &chu[0][0], &chu[0][1]);
     for (i=1; i < 4; i++) {
@@ -519,7 +531,7 @@ jd2yearmonth(double jd, int *year, int *month)
 
 
 static PyMethodDef module_methods[] = {
-    {"_kyureki_from_jd_test", (PyCFunction)kyureki_from_jd_test,
+    {"kyureki_from_date", (PyCFunction)kyureki_from_date,
      METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
