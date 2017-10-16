@@ -674,9 +674,10 @@ def jd2yearmonth(jd):
 
 
 # スピードアップ用の C 言語版が存在すればそちらを使う
+_Kyureki = Kyureki
 try:
     import _qreki
-    # Kyureki = _qreki.Kyureki
+    Kyureki = _qreki.Kyureki
 except ImportError:
     pass
 

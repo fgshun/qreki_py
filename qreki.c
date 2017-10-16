@@ -1,10 +1,14 @@
 #include "Python.h"
+#include "structmember.h"
 #include <stdlib.h>
 #include <math.h>
 
 static PyObject *
-kyureki_from_jd_test(PyObject *self, PyObject *args, PyObject *kwargs);
-
+kyureki_from_date(PyObject *self, PyObject *args, PyObject *kwargs);
+static PyObject *
+Kyureki_new(PyTypeObject *subtype, PyObject *args, PyObject *kwargs);
+static PyObject *
+Kyureki_from_date(PyTypeObject *subtype, PyObject *args, PyObject *kwargs);
 static double
 normalize_angle(double angle);
 static int
@@ -24,6 +28,81 @@ static void
 jd2yearmonth(double jd, int *year, int *month);
 
 static const double degToRad = Py_MATH_PI / 180.0;
+static const double jst_tz = 0.375;
+
+
+typedef struct {
+    PyObject_HEAD
+    unsigned short year;
+    unsigned char month;
+    unsigned char leap_month;
+    unsigned char day;
+} KyurekiObject;
+
+
+static PyMemberDef Kyureki_members[] = {
+    {"year", T_USHORT, offsetof(KyurekiObject, year), READONLY, NULL},
+    {"month", T_UBYTE, offsetof(KyurekiObject, month), READONLY, NULL},
+    {"leap_month", T_UBYTE, offsetof(KyurekiObject, leap_month), READONLY, NULL},
+    {"day", T_UBYTE, offsetof(KyurekiObject, day), READONLY, NULL},
+    {NULL}
+};
+
+
+static PyObject *
+Kyureki_from_date(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
+{
+    PyObject *t;
+
+    t = kyureki_from_date(NULL, args, kwargs);
+    if (!t) { return t; }
+
+    return Kyureki_new(subtype, t, NULL);
+}
+
+
+static PyMethodDef Kyureki_methods[] = {
+    {"from_date", (PyCFunction)Kyureki_from_date, METH_VARARGS|METH_KEYWORDS|METH_CLASS, NULL},
+    {NULL, NULL, 0, NULL} /* Sentinel */
+};
+
+
+static PyObject *
+Kyureki_new(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
+{
+    KyurekiObject *self;
+    unsigned short year;
+    unsigned char month, leap_month, day;
+    static char *kwlist[] = {"year", "month", "leap_month", "day", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "hbbb", kwlist,
+                                     &year, &month, &leap_month, &day)) { return NULL; }
+
+    self = (KyurekiObject *)subtype->tp_alloc(subtype, 1);
+    self->year = year;
+    self->month = month;
+    self->leap_month = leap_month;
+    self->day = day;
+
+    return (PyObject *)self;
+}
+
+
+static PyType_Slot Kyureki_Type_slots[] = {
+    {Py_tp_doc, "Kyureki Type"},
+    {Py_tp_members, Kyureki_members},
+    {Py_tp_methods, Kyureki_methods},
+    {Py_tp_new, Kyureki_new},
+    {0, 0},
+};
+
+
+static PyType_Spec Kyureki_Type_spec = {
+    "_qreki.Kyureki",
+    sizeof(KyurekiObject),
+    0,
+    Py_TPFLAGS_DEFAULT,
+    Kyureki_Type_slots
+};
 
 
 static double
@@ -45,11 +124,11 @@ kyureki_from_date(PyObject *self, PyObject *args, PyObject *kwargs)
     static char *kwlist[] = {"date", "tz", NULL};
     PyObject *date;
     long ordinal, tm0;
-    double tz;
+    double tz = jst_tz;
     PyObject *ordinal_obj;
     int kyureki_year, kyureki_month, kyureki_leap, kyureki_day, error;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Od", kwlist, &date, &tz)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|d", kwlist, &date, &tz)) {
         return NULL;
     }
 
@@ -539,7 +618,17 @@ static PyMethodDef module_methods[] = {
 
 int module_exec(PyObject *module)
 {
+    PyObject *kyureki_type;
+
+    kyureki_type = PyType_FromSpec(&Kyureki_Type_spec);
+    if (!kyureki_type) { goto fail; }
+    if(PyModule_AddObject(module, "Kyureki", kyureki_type)) { goto fail; }
+
     return 0;
+fail:
+    Py_XDECREF(kyureki_type);
+    Py_XDECREF(module);
+    return -1;
 }
 
 
