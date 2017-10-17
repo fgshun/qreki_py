@@ -1,3 +1,4 @@
+#define Py_LIMITED_API 0x03050000
 #include <Python.h>
 #include <structmember.h>
 #include <stdlib.h>
@@ -113,7 +114,7 @@ Kyureki_new(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "hbbb", kwlist,
                                      &year, &month, &leap_month, &day)) { return NULL; }
 
-    self = (KyurekiObject *)subtype->tp_alloc(subtype, 1);
+    self = PyObject_New(KyurekiObject, subtype);
     self->year = year;
     self->month = month;
     self->leap_month = leap_month;
