@@ -1,8 +1,10 @@
-#include "Python.h"
-#include "structmember.h"
+#include <Python.h>
+#include <structmember.h>
 #include <stdlib.h>
 #include <math.h>
 
+static PyObject *
+Kyureki_from_ymd(PyTypeObject *subtype, PyObject *args, PyObject *kwargs);
 static PyObject *
 kyureki_from_date(PyObject *self, PyObject *args, PyObject *kwargs);
 static PyObject *
@@ -50,6 +52,39 @@ static PyMemberDef Kyureki_members[] = {
 
 
 static PyObject *
+Kyureki_from_ymd(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
+{
+    PyObject *year, *month, *day, *tz = NULL;
+    PyObject *datetime_module, *date_type, *date, *from_date_args;
+    PyObject *self;
+
+    static char *kwlist[] = {"year", "month", "day", "tz", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OOO|O", kwlist,
+                                     &year, &month, &day, &tz)) { return NULL; }
+
+    datetime_module = PyImport_ImportModule("datetime");
+    if (!datetime_module) { return NULL; }
+    date_type = PyObject_GetAttrString(datetime_module, "date");
+    Py_DECREF(datetime_module);
+    if (!date_type) { return NULL; }
+    date = PyObject_CallFunctionObjArgs(date_type, year, month, day, NULL);
+    Py_DECREF(date_type);
+    if (!date) { return NULL; }
+    if (tz == NULL) {
+        from_date_args = PyTuple_Pack(1, date);
+    } else {
+        from_date_args = PyTuple_Pack(2, date, tz);
+    }
+    Py_DECREF(date);
+    if (!from_date_args) { return NULL; }
+
+    self = Kyureki_from_date(subtype, from_date_args, NULL);
+    Py_DECREF(from_date_args);
+    return self;
+}
+
+
+static PyObject *
 Kyureki_from_date(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
 {
     PyObject *t;
@@ -62,6 +97,7 @@ Kyureki_from_date(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
 
 
 static PyMethodDef Kyureki_methods[] = {
+    {"from_ymd", (PyCFunction)Kyureki_from_ymd, METH_VARARGS|METH_KEYWORDS|METH_CLASS, NULL},
     {"from_date", (PyCFunction)Kyureki_from_date, METH_VARARGS|METH_KEYWORDS|METH_CLASS, NULL},
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
