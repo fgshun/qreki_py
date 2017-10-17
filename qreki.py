@@ -83,7 +83,7 @@ class Kyureki:
     ROKUYOU = ('大安', '赤口', '先勝', '友引', '先負', '仏滅')
 
     def __new__(cls, year, month, leap_month, day):
-        self = object.__new__(cls)
+        self = super().__new__(cls)
         self._year = year
         self._month = month
         self._leap_month = leap_month
