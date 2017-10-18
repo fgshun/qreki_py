@@ -1,8 +1,6 @@
 #define Py_LIMITED_API 0x03050000
 #include <Python.h>
 #include <structmember.h>
-#include <stdlib.h>
-#include <math.h>
 
 static PyObject *
 Kyureki_from_ymd(PyTypeObject *subtype, PyObject *args, PyObject *kwargs);
@@ -97,10 +95,28 @@ Kyureki_from_date(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
 }
 
 
+static PyObject *
+Kyureki_rokuyou(KyurekiObject *self, PyObject *args)
+{
+    PyObject *rokuyou_tuple, *rokuyou;
+    rokuyou_tuple = PyObject_GetAttrString((PyObject *)self, "ROKUYOU");
+    if (!rokuyou_tuple) { return NULL; }
+    rokuyou = PySequence_GetItem(rokuyou_tuple, (self->month + self->day) % 6);
+    Py_DECREF(rokuyou_tuple);
+    return rokuyou;
+}
+
+
 static PyMethodDef Kyureki_methods[] = {
     {"from_ymd", (PyCFunction)Kyureki_from_ymd, METH_VARARGS|METH_KEYWORDS|METH_CLASS, NULL},
     {"from_date", (PyCFunction)Kyureki_from_date, METH_VARARGS|METH_KEYWORDS|METH_CLASS, NULL},
     {NULL, NULL, 0, NULL} /* Sentinel */
+};
+
+
+static PyGetSetDef Kyureki_getset[] = {
+    {"rokuyou", (getter)Kyureki_rokuyou, NULL, NULL, NULL},
+    {NULL} /* Sentinel */
 };
 
 
@@ -127,6 +143,7 @@ Kyureki_new(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
 static PyType_Slot Kyureki_Type_slots[] = {
     {Py_tp_doc, "Kyureki Type"},
     {Py_tp_members, Kyureki_members},
+    {Py_tp_getset, Kyureki_getset},
     {Py_tp_methods, Kyureki_methods},
     {Py_tp_new, Kyureki_new},
     {0, 0},
@@ -653,18 +670,36 @@ static PyMethodDef module_methods[] = {
 };
 
 
-int module_exec(PyObject *module)
+static int module_exec(PyObject *module)
 {
-    PyObject *kyureki_type;
+    PyObject *kyureki_type = NULL;
+    PyObject *rokuyou = NULL;
+    static Py_UCS4 taian[] = {0x5927, 0x5b89}; /* 大安 */
+    static Py_UCS4 shakkou[] = {0x8d64, 0x53e3}; /* 赤口 */
+    static Py_UCS4 sensho[] = {0x5148, 0x52dd}; /* 先勝 */
+    static Py_UCS4 tomobiki[] = {0x53cb, 0x5f15}; /* 友引 */
+    static Py_UCS4 senpu[] = {0x5148, 0x8ca0}; /* 先負 */
+    static Py_UCS4 butsumetsu[] = {0x4ecf, 0x6ec5}; /* 仏滅 */
 
     kyureki_type = PyType_FromSpec(&Kyureki_Type_spec);
     if (!kyureki_type) { goto fail; }
+
+    rokuyou = Py_BuildValue("u#u#u#u#u#u#",
+                            taian, 2, shakkou, 2, sensho, 2,
+                            tomobiki, 2, senpu, 2, butsumetsu, 2);
+    if (!rokuyou) { goto fail; }
+    if (PyObject_SetAttrString(kyureki_type, "ROKUYOU", rokuyou)) { goto fail; }
+    Py_DECREF(rokuyou);
+    rokuyou = NULL;
+
     if(PyModule_AddObject(module, "Kyureki", kyureki_type)) { goto fail; }
 
     return 0;
 fail:
     Py_XDECREF(kyureki_type);
+    Py_XDECREF(rokuyou);
     Py_XDECREF(module);
+
     return -1;
 }
 

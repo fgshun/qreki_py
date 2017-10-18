@@ -130,6 +130,7 @@ class Kyureki:
 
         return self._day
 
+    @property
     def rokuyou(self):
         """六曜を得る
 
