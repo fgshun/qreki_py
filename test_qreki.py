@@ -39,3 +39,6 @@ def test_rokuyou():
 
     o2 = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
     assert o2.rokuyou == o1.rokuyou
+
+    assert qreki.rokuyou_from_ymd(2017, 10, 15) == '先負'
+    assert qreki.rokuyou_from_date(datetime.date(2017, 10, 15)) == '先負'

@@ -696,8 +696,8 @@ def rokuyou_from_ymd(year, month, day):
     旧暦オブジェクトをつくり、
     これの rokuyou() メソッドを呼ぶほうが効率がよい。"""
 
-    date = datetime.date(year, month, day)
-    return rokuyou_from_date(date)
+    kyureki = Kyureki.from_ymd(year, month, day)
+    return kyureki.rokuyou
 
 
 def rokuyou_from_date(date):
@@ -713,7 +713,7 @@ def rokuyou_from_date(date):
     これの rokuyou() メソッドを呼ぶほうが効率がよい。"""
 
     kyureki = Kyureki.from_date(date)
-    return kyureki.rokuyou()
+    return kyureki.rokuyou
 
 
 def main():
