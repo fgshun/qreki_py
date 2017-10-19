@@ -101,7 +101,7 @@ class Kyureki:
     @classmethod
     def from_date(cls, date, tz=TZ):
         """datetime.date より旧暦を得る"""
-        kyureki =  kyureki_from_date(date, tz)
+        kyureki =  _kyureki_from_date(date, tz)
         return cls(*kyureki)
 
     @property
@@ -151,7 +151,7 @@ class Kyureki:
                 self._day)
 
 
-def kyureki_from_date(date, tz):
+def _kyureki_from_date(date, tz):
     """新暦に対応する、旧暦を求める
 
     引数:
@@ -170,24 +170,24 @@ def kyureki_from_date(date, tz):
     # 計算対象の直前にあたる二分二至の時刻を求める
     # chu[0][0]:二分二至の時刻  chu[0][1]:その時の太陽黄経
     chu = []
-    chu.append(before_nibun_from_jd(tm, tz))
+    chu.append(_before_nibun_from_jd(tm, tz))
 
     # 中気の時刻を計算
     for i in range(1, 4):
-        chu.append(chuki_from_jd(chu[i - 1][0] + 32.0, tz))
+        chu.append(_chuki_from_jd(chu[i - 1][0] + 32.0, tz))
 
     # 計算対象の直前にあたる二分二至の直前の朔の時刻を求める
     saku = []
-    saku.append(saku_from_jd(chu[0][0], tz))
+    saku.append(_saku_from_jd(chu[0][0], tz))
 
     # 朔の時刻を求める
     for i in range(1, 5):
-        saku.append(saku_from_jd(saku[i - 1] + 30.0, tz))
+        saku.append(_saku_from_jd(saku[i - 1] + 30.0, tz))
 
         if abs(int(saku[i - 1]) - int(saku[i])) <= 26:
             # 前と同じ時刻を計算した場合（両者の差が26日以内）には、
             # 初期値を +33日にして再実行させる
-            saku[i] = saku_from_jd(saku[i - 1] + 35.0, tz)
+            saku[i] = _saku_from_jd(saku[i - 1] + 35.0, tz)
 
     if int(saku[1]) <= int(chu[0][0]):
         # saku[1]が二分二至の時刻以前になってしまった場合には、
@@ -198,7 +198,7 @@ def kyureki_from_date(date, tz):
         for i in range(0, 4):
             saku[i] = saku[i + 1]
         else:
-            saku[4] = saku_from_jd(saku[3] + 35.0, tz)
+            saku[4] = _saku_from_jd(saku[3] + 35.0, tz)
     elif int(saku[0]) > int(chu[0][0]):
         # saku[0]が二分二至の時刻以後になってしまった場合には、
         # 朔をさかのぼり足りないと見て、朔の時刻を繰り上げて修正する。
@@ -208,7 +208,7 @@ def kyureki_from_date(date, tz):
         for i in range(4, 0, -1):
             saku[i] = saku[i - 1]
         else:
-            saku[0] = saku_from_jd(saku[0] - 27.0, tz)
+            saku[0] = _saku_from_jd(saku[0] - 27.0, tz)
 
     # 閏月検索Ｆｌａｇセット
     # （節月で４ヶ月の間に朔が５回あると、閏月がある可能性がある。）
@@ -272,7 +272,7 @@ def kyureki_from_date(date, tz):
     return kyureki_year, kyureki_month, kyureki_leap, kyureki_day
 
 
-def chuki_from_jd(tm, tz):
+def _chuki_from_jd(tm, tz):
     """中気の時刻を求める
 
     引数:
@@ -290,7 +290,7 @@ def chuki_from_jd(tm, tz):
 
     # 中気の黄経 λsun0 を求める
     t = (tm2 + 0.5) / 36525.0 + (tm1 - 2451545.0) / 36525.0
-    rm_sun = longitude_of_sun(t)
+    rm_sun = _longitude_of_sun(t)
     rm_sun0 = rm_sun - rm_sun % 30.0
 
     # 繰り返し計算によって中気の時刻を計算する
@@ -300,7 +300,7 @@ def chuki_from_jd(tm, tz):
     while abs(delta_t1 + delta_t2) > 1.0 / 86400.0:
         # λsun を計算
         t = (tm2 + 0.5) / 36525.0 + (tm1 - 2451545.0) / 36525.0
-        rm_sun = longitude_of_sun(t)
+        rm_sun = _longitude_of_sun(t)
 
         # 黄経差 Δλ＝λsun －λsun0
         delta_rm = rm_sun - rm_sun0
@@ -326,7 +326,7 @@ def chuki_from_jd(tm, tz):
     return (tm1 + tm2 + tz, rm_sun0)
 
 
-def before_nibun_from_jd(tm, tz):
+def _before_nibun_from_jd(tm, tz):
     """直前の二分二至の時刻を求める
 
     引数:
@@ -344,7 +344,7 @@ def before_nibun_from_jd(tm, tz):
 
     # 直前の二分二至の黄経 λsun0 を求める
     t = (tm2 + 0.5) / 36525.0 + (tm1 - 2451545.0) / 36525.0
-    rm_sun = longitude_of_sun(t)
+    rm_sun = _longitude_of_sun(t)
     rm_sun0 = rm_sun - rm_sun % 90.0
 
     # 繰り返し計算によって直前の二分二至の時刻を計算する
@@ -354,7 +354,7 @@ def before_nibun_from_jd(tm, tz):
     while abs(delta_t1 + delta_t2) > (1.0 / 86400.0):
         # λsun を計算
         t = (tm2 + 0.5) / 36525.0 + (tm1 - 2451545.0) / 36525.0
-        rm_sun = longitude_of_sun(t)
+        rm_sun = _longitude_of_sun(t)
 
         # 黄経差 Δλ＝λsun －λsun0
         delta_rm = rm_sun - rm_sun0
@@ -383,7 +383,7 @@ def before_nibun_from_jd(tm, tz):
     return (tm1 + tm2 + tz, rm_sun0)
 
 
-def saku_from_jd(tm, tz):
+def _saku_from_jd(tm, tz):
     """与えられた時刻の直近の朔の時刻（JST）を求める
 
     引数:
@@ -405,8 +405,8 @@ def saku_from_jd(tm, tz):
         # 太陽の黄経λsun ,月の黄経λmoon を計算
         # t = (tm - 2451548.0 + 0.5)/36525.0;
         t = (tm2 + 0.5) / 36525.0 + (tm1 - 2451545.0) / 36525.0
-        rm_sun = longitude_of_sun(t)
-        rm_moon = longitude_of_moon(t)
+        rm_sun = _longitude_of_sun(t)
+        rm_moon = _longitude_of_moon(t)
 
         # 月と太陽の黄経差Δλ
         # Δλ＝λmoon－λsun
@@ -456,7 +456,7 @@ def saku_from_jd(tm, tz):
     return tm1 + tm2 + tz
 
 
-def longitude_of_sun(t):
+def _longitude_of_sun(t):
     """太陽の黄経 λsun を計算する
 
     引数:
@@ -509,7 +509,7 @@ def longitude_of_sun(t):
     return th
 
 
-def longitude_of_moon(t):
+def _longitude_of_moon(t):
     """月の黄経 λmoon を計算する
 
     引数:
@@ -650,28 +650,6 @@ def longitude_of_moon(t):
     th = (th + ang) % 360.0
 
     return th
-
-
-def jd2yearmonth(jd):
-    """ローカル補正込みのユリウス通日から年月を得る"""
-
-    f0 = math.floor(jd + 68570.0)
-    f1 = math.floor(f0 / 36524.25)
-    f2 = f0 - math.floor(36524.25 * f1 + 0.75)
-    f3 = math.floor((f2 + 1.0) / 365.2425)
-    f4 = f2 - math.floor(365.25 * f3) + 31.0
-    f5 = math.floor(f4 / 30.59)
-    f6 = math.floor(f5 / 11.0)
-
-    i1 = int(f1)
-    i3 = int(f3)
-    i5 = int(f5)
-    i6 = int(f6)
-
-    year = 100 * (i1 - 49) + i3 + i6
-    month = i5 - 12 * i6 + 2
-
-    return year, month
 
 
 # スピードアップ用の C 言語版が存在すればそちらを使う
