@@ -42,3 +42,19 @@ def test_rokuyou():
 
     assert qreki.rokuyou_from_ymd(2017, 10, 15) == '先負'
     assert qreki.rokuyou_from_date(datetime.date(2017, 10, 15)) == '先負'
+
+
+def test_repr():
+    o1 = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
+    assert repr(o1) == "Kyureki(2017, 8, 0, 26)"
+
+    o2 = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
+    assert repr(o2) == repr(o1)
+
+
+def test_str():
+    o1 = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
+    assert str(o1) == "2017年8月26日"
+
+    o2 = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
+    assert str(o2) == str(o1)

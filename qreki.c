@@ -140,12 +140,45 @@ Kyureki_new(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
 }
 
 
+static PyObject *
+Kyureki_repr(KyurekiObject *self)
+{
+    PyObject *classname = NULL, *ret = NULL;
+    classname = PyObject_GetAttrString((PyObject *)Py_TYPE(self), "__name__");
+    if (!classname) { return NULL; }
+    ret = PyUnicode_FromFormat("%U(%u, %u, %u, %u)",
+                               classname,
+                               self->year, self->month,
+                               self->leap_month, self->day);
+    Py_DECREF(classname);
+    return ret;
+}
+
+
+static PyObject *
+Kyureki_str(KyurekiObject *self)
+{
+    PyObject *template = NULL, *ret = NULL;
+    if (self->leap_month) {
+         template = PyUnicode_FromString("{:d}年閏{:d}月{:d}日");
+    } else {
+         template = PyUnicode_FromString("{:d}年{:d}月{:d}日");
+    }
+    if (!template) { return NULL; }
+    ret = PyObject_CallMethod(template, "format", "hbb", self->year, self->month, self->day);
+    Py_DECREF(template);
+    return ret;
+}
+
+
 static PyType_Slot Kyureki_Type_slots[] = {
     {Py_tp_doc, "Kyureki Type"},
     {Py_tp_members, Kyureki_members},
     {Py_tp_getset, Kyureki_getset},
     {Py_tp_methods, Kyureki_methods},
     {Py_tp_new, Kyureki_new},
+    {Py_tp_repr, Kyureki_repr},
+    {Py_tp_str, Kyureki_str},
     {0, 0},
 };
 
