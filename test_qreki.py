@@ -58,3 +58,97 @@ def test_str():
 
     o2 = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
     assert str(o2) == str(o1)
+
+
+def test_cmp():
+    o1 = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
+    o1b = qreki._Kyureki.from_date(datetime.date(2017, 10, 16))
+    o1s = qreki._Kyureki.from_date(datetime.date(2017, 10, 14))
+    o1e = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
+
+    o2 = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
+    o2b = qreki.Kyureki.from_date(datetime.date(2017, 10, 16))
+    o2s = qreki.Kyureki.from_date(datetime.date(2017, 10, 14))
+    o2e = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
+
+    assert o1 < o1b
+    assert o1 <= o1b
+    assert not o1 == o1b
+    assert o1 != o1b
+    assert not o1 > o1b
+    assert not o1 >= o1b
+
+    assert not o1 < o1s
+    assert not o1 <= o1s
+    assert not o1 == o1s
+    assert o1 != o1s
+    assert o1 > o1s
+    assert o1 >= o1s
+
+    assert not o1 < o1e
+    assert o1 <= o1e
+    assert o1 == o1e
+    assert not o1 != o1e
+    assert not o1 > o1e
+    assert o1 >= o1e
+
+    assert o2 < o2b
+    assert o2 <= o2b
+    assert not o2 == o2b
+    assert o2 != o2b
+    assert not o2 > o2b
+    assert not o2 >= o2b
+
+    assert not o2 < o2s
+    assert not o2 <= o2s
+    assert not o2 == o2s
+    assert o2 != o2s
+    assert o2 > o2s
+    assert o2 >= o2s
+
+    assert not o2 < o2e
+    assert o2 <= o2e
+    assert o2 == o2e
+    assert not o2 != o2e
+    assert not o2 > o2e
+    assert o2 >= o2e
+
+
+def test_hash():
+    o1 = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
+    o1b = qreki._Kyureki.from_date(datetime.date(2017, 10, 16))
+    o1e = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
+
+    o2 = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
+    o2b = qreki.Kyureki.from_date(datetime.date(2017, 10, 16))
+    o2e = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
+
+
+    assert hash(o1) != hash(o1b)
+    assert hash(o1) == hash(o1e)
+    assert hash(o2) != hash(o2b)
+    assert hash(o2) == hash(o2e)
+    assert hash(o1) == hash(o2)
+
+    d = {}
+    d[o1] = 1
+    d[o1b] = 2
+    d[o1e] = 3
+    assert len(d) == 2
+    assert d[o1b] == 2
+    assert d[o1] == 3
+
+    d = {}
+    d[o1] = 1
+    d[o1b] = 2
+    d[o1e] = 3
+    assert len(d) == 2
+    assert d[o1b] == 2
+    assert d[o1] == 3
+
+    d = {}
+    d[o1] = 1
+    d[o2] = 2
+    assert len(d) == 2
+    assert d[o1] == 1
+    assert d[o2] == 2

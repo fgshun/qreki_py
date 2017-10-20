@@ -140,7 +140,7 @@ class Kyureki:
 
     def __repr__(self):
         return '{:s}({:d}, {:d}, {:d}, {:d})'.format(
-                self.__class__.__name__,
+                type(self).__name__,
                 self._year, self._month, self._leap_month, self._day)
 
     def __str__(self):
@@ -149,6 +149,99 @@ class Kyureki:
                 '閏' if self._leap_month else '',
                 self._month,
                 self._day)
+
+    def __lt__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        if (self._year < other._year):
+            return True
+        if (self._year > other._year):
+            return False
+        if (self._month < other._month):
+            return True
+        if (self._month > other._month):
+            return False
+        if (self._leap_month < other._leap_month):
+            return True
+        if (self._leap_month > other._leap_month):
+            return False
+        return self._day < other._day
+
+    def __le__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        if (self._year < other._year):
+            return True
+        if (self._year > other._year):
+            return False
+        if (self._month < other._month):
+            return True
+        if (self._month > other._month):
+            return False
+        if (self._leap_month < other._leap_month):
+            return True
+        if (self._leap_month > other._leap_month):
+            return False
+        return self._day <= other._day
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        return (self._year == other._year and
+                self._month == other._month and
+                self._leap_month == other._leap_month and
+                self._day == other._day)
+
+    def __ne__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        return (self._year != other._year or
+                self._month != other._month or
+                self._leap_month != other._leap_month or
+                self._day != other._day)
+
+    def __gt__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        if (self._year > other._year):
+            return True
+        if (self._year < other._year):
+            return False
+        if (self._month > other._month):
+            return True
+        if (self._month < other._month):
+            return False
+        if (self._leap_month > other._leap_month):
+            return True
+        if (self._leap_month < other._leap_month):
+            return False
+        return self._day > other._day
+
+    def __ge__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+
+        if (self._year > other._year):
+            return True
+        if (self._year < other._year):
+            return False
+        if (self._month > other._month):
+            return True
+        if (self._month < other._month):
+            return False
+        if (self._leap_month > other._leap_month):
+            return True
+        if (self._leap_month < other._leap_month):
+            return False
+        return self._day >= other._day
+
+    def __hash__(self):
+        return hash((self._year, self._month, self._leap_month, self._day))
 
 
 def _kyureki_from_date(date, tz):

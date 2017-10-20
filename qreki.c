@@ -86,12 +86,14 @@ Kyureki_from_ymd(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
 static PyObject *
 Kyureki_from_date(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
 {
-    PyObject *t;
+    PyObject *t, *ret;
 
     t = kyureki_from_date(NULL, args, kwargs);
     if (!t) { return t; }
 
-    return Kyureki_new(subtype, t, NULL);
+    ret = Kyureki_new(subtype, t, NULL);
+    Py_DECREF(t);
+    return ret;
 }
 
 
@@ -131,6 +133,7 @@ Kyureki_new(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
                                      &year, &month, &leap_month, &day)) { return NULL; }
 
     self = PyObject_New(KyurekiObject, subtype);
+    if (!self) { return NULL; }
     self->year = year;
     self->month = month;
     self->leap_month = leap_month;
@@ -171,6 +174,90 @@ Kyureki_str(KyurekiObject *self)
 }
 
 
+static PyObject *
+Kyureki_richcompare(KyurekiObject *self, KyurekiObject *other, int op)
+{
+    PyObject *result;
+    int c;
+
+    if (!PyObject_IsInstance((PyObject *)other, (PyObject *)Py_TYPE(self))) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
+
+    switch (op) {
+        case Py_LT:
+            if (self->year < other->year) { c = 1; break; }
+            if (self->year > other->year) { c = 0; break; }
+            if (self->month < other->month) { c = 1; break; }
+            if (self->month > other->month) { c = 0; break; }
+            if (self->leap_month < other->leap_month) { c = 1; break; }
+            if (self->leap_month > other->leap_month) { c = 0; break; }
+            c = self->day < other->day;
+            break;
+        case Py_LE:
+            if (self->year < other->year) { c = 1; break; }
+            if (self->year > other->year) { c = 0; break; }
+            if (self->month < other->month) { c = 1; break; }
+            if (self->month > other->month) { c = 0; break; }
+            if (self->leap_month < other->leap_month) { c = 1; break; }
+            if (self->leap_month > other->leap_month) { c = 0; break; }
+            c = self->day <= other->day;
+            break;
+        case Py_EQ:
+            c = ((self->year == other->year) &&
+                 (self->month == other->month) &&
+                 (self->leap_month == other->leap_month) &&
+                 (self->day == other->day));
+            break;
+        case Py_NE:
+            c = ((self->year != other->year) ||
+                 (self->month != other->month) ||
+                 (self->leap_month != other->leap_month) ||
+                 (self->day != other->day));
+            break;
+        case Py_GT:
+            if (self->year > other->year) { c = 1; break; }
+            if (self->year < other->year) { c = 0; break; }
+            if (self->month > other->month) { c = 1; break; }
+            if (self->month < other->month) { c = 0; break; }
+            if (self->leap_month > other->leap_month) { c = 1; break; }
+            if (self->leap_month < other->leap_month) { c = 0; break; }
+            c = self->day > other->day;
+            break;
+        case Py_GE:
+            if (self->year > other->year) { c = 1; break; }
+            if (self->year < other->year) { c = 0; break; }
+            if (self->month > other->month) { c = 1; break; }
+            if (self->month < other->month) { c = 0; break; }
+            if (self->leap_month > other->leap_month) { c = 1; break; }
+            if (self->leap_month < other->leap_month) { c = 0; break; }
+            c = self->day >= other->day;
+            break;
+        default:
+            Py_RETURN_NOTIMPLEMENTED;
+    }
+
+    result = c ? Py_True: Py_False;
+    Py_INCREF(result);
+    return result;
+}
+
+
+static Py_hash_t
+Kyureki_hash(KyurekiObject *self)
+{
+    Py_hash_t ret;
+    PyObject *t;
+
+    t = Py_BuildValue("hbbb", self->year, self->month, self->leap_month, self->day);
+    if (!t) { return -1; }
+    ret = PyObject_Hash(t);
+    Py_DECREF(t);
+
+    return ret;
+}
+
+
 static PyType_Slot Kyureki_Type_slots[] = {
     {Py_tp_doc, "Kyureki Type"},
     {Py_tp_members, Kyureki_members},
@@ -179,6 +266,8 @@ static PyType_Slot Kyureki_Type_slots[] = {
     {Py_tp_new, Kyureki_new},
     {Py_tp_repr, Kyureki_repr},
     {Py_tp_str, Kyureki_str},
+    {Py_tp_richcompare, Kyureki_richcompare},
+    {Py_tp_hash, Kyureki_hash},
     {0, 0},
 };
 
@@ -232,7 +321,7 @@ kyureki_from_date(PyObject *self, PyObject *args, PyObject *kwargs)
                             &kyureki_leap, &kyureki_day);
     if (error) { return NULL; }
 
-    return Py_BuildValue("iiii", kyureki_year, kyureki_month, kyureki_leap,
+    return Py_BuildValue("hbbb", kyureki_year, kyureki_month, kyureki_leap,
                          kyureki_day);
 }
 
