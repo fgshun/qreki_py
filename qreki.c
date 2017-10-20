@@ -68,17 +68,14 @@ static PyObject *
 Kyureki_from_ymd(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
 {
     PyObject *year, *month, *day, *tz = NULL;
-    PyObject *datetime_module, *date_type, *date, *from_date_args;
+    PyObject *date_type, *date, *from_date_args;
     PyObject *self;
 
     static char *kwlist[] = {"year", "month", "day", "tz", NULL};
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OOO|O", kwlist,
                                      &year, &month, &day, &tz)) { return NULL; }
 
-    datetime_module = PyImport_ImportModule("datetime");
-    if (!datetime_module) { return NULL; }
-    date_type = PyObject_GetAttrString(datetime_module, "date");
-    Py_DECREF(datetime_module);
+    date_type = PyObject_GetAttrString(subtype, "_date");
     if (!date_type) { return NULL; }
     date = PyObject_CallFunctionObjArgs(date_type, year, month, day, NULL);
     Py_DECREF(date_type);
@@ -825,10 +822,13 @@ static int module_exec(PyObject *module)
     static Py_UCS4 tomobiki[] = {0x53cb, 0x5f15}; /* 友引 */
     static Py_UCS4 senpu[] = {0x5148, 0x8ca0}; /* 先負 */
     static Py_UCS4 butsumetsu[] = {0x4ecf, 0x6ec5}; /* 仏滅 */
+    PyObject *datetime_module = NULL;
+    PyObject *date_type = NULL;
 
     kyureki_type = PyType_FromSpec(&Kyureki_Type_spec);
     if (!kyureki_type) { goto fail; }
 
+    /* Kyureki.ROKUYOU */
     rokuyou = Py_BuildValue("u#u#u#u#u#u#",
                             taian, 2, shakkou, 2, sensho, 2,
                             tomobiki, 2, senpu, 2, butsumetsu, 2);
@@ -837,12 +837,25 @@ static int module_exec(PyObject *module)
     Py_DECREF(rokuyou);
     rokuyou = NULL;
 
+    /* Kyureki._date = datetime.date */
+    datetime_module = PyImport_ImportModule("datetime");
+    if (!datetime_module) { goto fail; }
+    date_type = PyObject_GetAttrString(datetime_module, "date");
+    Py_DECREF(datetime_module);
+    datetime_module = NULL;
+    if (!date_type) { goto fail; }
+    if (PyObject_SetAttrString(kyureki_type, "_date", date_type)) { goto fail; }
+    Py_DECREF(date_type);
+    date_type = NULL;
+
     if(PyModule_AddObject(module, "Kyureki", kyureki_type)) { goto fail; }
 
     return 0;
 fail:
     Py_XDECREF(kyureki_type);
     Py_XDECREF(rokuyou);
+    Py_XDECREF(datetime_module);
+    Py_XDECREF(date_type);
     Py_XDECREF(module);
 
     return -1;
