@@ -143,6 +143,13 @@ Kyureki_new(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
 }
 
 
+static void
+Kyureki_dealloc(KyurekiObject *self)
+{
+    PyObject_Del(self);
+}
+
+
 static PyObject *
 Kyureki_repr(KyurekiObject *self)
 {
@@ -264,6 +271,7 @@ static PyType_Slot Kyureki_Type_slots[] = {
     {Py_tp_getset, Kyureki_getset},
     {Py_tp_methods, Kyureki_methods},
     {Py_tp_new, Kyureki_new},
+    {Py_tp_dealloc, Kyureki_dealloc},
     {Py_tp_repr, Kyureki_repr},
     {Py_tp_str, Kyureki_str},
     {Py_tp_richcompare, Kyureki_richcompare},
