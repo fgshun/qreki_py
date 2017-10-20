@@ -75,7 +75,7 @@ Kyureki_from_ymd(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OOO|O", kwlist,
                                      &year, &month, &day, &tz)) { return NULL; }
 
-    date_type = PyObject_GetAttrString(subtype, "_date");
+    date_type = PyObject_GetAttrString((PyObject *)subtype, "_date");
     if (!date_type) { return NULL; }
     date = PyObject_CallFunctionObjArgs(date_type, year, month, day, NULL);
     Py_DECREF(date_type);
