@@ -1,50 +1,46 @@
 import math
 import datetime
 
-"""新暦、旧暦変換スクリプト
+"""新暦、旧暦変換 qreki.py
 
-Arrenged by fgshun 2009, 2017
-    (http://d.hatena.ne.jp/fgshun/)
+ある新暦より対応する旧暦と六曜を算出します。
 
 使用例
+```
 >>> from qreki import Kyureki
->>> k = Kyureki.from_ymd(2009, 11, 27)
->>> print(repr(k))
-Kyureki(2009, 10, 0, 11)
->>> print(k)
-2009年10月11日
->>> print(k.rokuyou())
-友引
->>> k.year, k.month, k.leap_month, k.day
-(2009, 10, 0, 11)
->>>
+>>> k = Kyureki.from_ymd(2017, 10, 17)
+>>> str(k)
+'2017年8月28日'
+>>> k.rokuyou
+'大安'
 >>> from datetime import date
->>> d = date(2009, 11, 27)
->>> Kyureki.from_date(d)
-Kyureki(2009, 10, 0, 11)
+>>> d = date(2017, 10, 21)
+>>> k = Kyureki.from_date(d)
+>>> str(k)
+'2017年9月2日'
+>>> k.rokuyou
+'仏滅'
+```
 
+qreki.py の元となった QREKI.AWK について
+qreki.py で用いている旧暦算出方法は高野 英明氏の QREKI.AWK から得たものです。
 
-
-このスクリプトで求められる『旧暦』とは、
-天保暦法を参考にしつつも、中気や朔の刻の計算方法を
-現代流の略算式に置き換えたりするなどの変更が加わっています。
-詳しくはオリジナルに含まれる QREKI.DOC などを参考にしてください。
-
-このスクリプトの内部で使われているローカル補正込みのユリウス通日とは
-本来の Astronomical Julian Day (AJD) から、
-- 0.5 + TZ(+9.0/24.0=0.375) ずらしたものであり、
-JST における 0 時にて整数となるようになっています。
-なお、 + 0.5 することで UTC における 0 時を整数とした
-Chronological Julian Day (CJD) とは補正の正負が異なります。
-
-
-
-オリジナル
 旧暦計算サンプルプログラム  $Revision:   1.1  $
 Coded by H.Takano 1993,1994
-
-オリジナルは高野 英明氏の AWK 版です。下記より入手できます。
 http://www.vector.co.jp/soft/dos/personal/se016093.html
+
+QREKI.AWK と qreki.py は新暦1年1月1日から9999年12月31日までの間で
+同じ結果が得られることを確認しています。
+過去や遠い未来にたいして適用する是非はともかく。
+
+配布規定に従い QREKI.AWK と QREKI.DOC を同梱します。
+QREKI.DOC には計算方法だけでなく、扱う暦と天保歴との相違点、
+六曜、朔、二十四節気、ユリウス通日など多数の知見が含まれています。
+
+
+Copyright (C) fgshun 2009, 2017
+https://github.com/fgshun/qreki_py
+http://d.hatena.ne.jp/fgshun/
 """
 
 VERSION_INFO = (0, 5, 0)
