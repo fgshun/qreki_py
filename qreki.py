@@ -45,23 +45,6 @@ Coded by H.Takano 1993,1994
 
 オリジナルは高野 英明氏の AWK 版です。下記より入手できます。
 http://www.vector.co.jp/soft/dos/personal/se016093.html
-
-なお、これを移植したり、参考にして作成されたりしたものが
-いくつか存在するようです。
-私が見つけたものをいくつか上げておきます
-（動作を確認していないものも含んでいます）。
-
-JavaScript
-    http://park1.wakwak.com/~y-nagano/Programs/koyomi/
-Perl
-    http://homepage2.nifty.com/sophia0/sub04.html
-Ruby
-    http://www.310f.com/exocet/hiki/?jqreki.rb
-PHP
-    http://www.2chan.net/script/
-    http://wppluginsj.sourceforge.jp/wp-koyomi/
-JAVA
-    http://homepage1.nifty.com/ave/kaihatsu/qreki.htm
 """
 
 VERSION_INFO = (0, 5, 0)
