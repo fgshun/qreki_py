@@ -1,40 +1,304 @@
-#include "Python.h"
-#include <stdlib.h>
-#include <math.h>
+#define Py_LIMITED_API 0x03050000
+#include <Python.h>
+#include <structmember.h>
+
+typedef struct {
+    PyObject_HEAD
+    unsigned short year;
+    unsigned char month;
+    unsigned char leap_month;
+    unsigned char day;
+} KyurekiObject;
+
+static PyObject *
+Kyureki_from_ymd(PyTypeObject *subtype, PyObject *args, PyObject *kwargs);
+static PyObject *
+Kyureki_from_date(PyTypeObject *subtype, PyObject *args, PyObject *kwargs);
+static PyObject *
+Kyureki_rokuyou(KyurekiObject *self, PyObject *args);
+static PyObject *
+Kyureki_new(PyTypeObject *subtype, PyObject *args, PyObject *kwargs);
+static void
+Kyureki_dealloc(KyurekiObject *self);
+static PyObject *
+Kyureki_repr(KyurekiObject *self);
+static PyObject *
+Kyureki_str(KyurekiObject *self);
+static PyObject *
+Kyureki_richcompare(KyurekiObject *self, KyurekiObject *other, int op);
+static Py_hash_t
+Kyureki_hash(KyurekiObject *self);
 
 static double
 normalize_angle(double angle);
-static PyObject *
-kyureki_from_jd(PyObject *self, PyObject *args, PyObject *kwargs);
-static PyObject *
-chuki_from_jd(PyObject *self, PyObject *args, PyObject *kwargs);
-static PyObject *
-before_nibun_from_jd(PyObject *self, PyObject *args, PyObject *kwargs);
-static PyObject *
-saku_from_jd(PyObject *self, PyObject *args, PyObject *kwargs);
-static PyObject *
-longitude_of_sun(PyObject *self, PyObject *args, PyObject *kwargs);
-static PyObject *
-longitude_of_moon(PyObject *self, PyObject *args, PyObject *kwargs);
-static PyObject *
-jd2yearmonth(PyObject *self, PyObject *args, PyObject *kwargs);
-
-static void
-chuki_from_jd2(
-        double tm, double tz, double *chuki, double *longitude);
-static void
-before_nibun_from_jd2(
-        double tm, double tz, double *nibun, double *longitude);
 static int
-saku_from_jd2(double tm, double tz, double *saku);
-static double
-longitude_of_sun2(double t);
-static double
-longitude_of_moon2(double t);
+kyureki_from_jd(int tm0, double tz, int *kyureki_year, int *kyureki_month,
+                int *kyureki_leap, int *kyureki_day);
 static void
-jd2yearmonth2(double jd, int *year, int *month);
+chuki_from_jd(double tm, double tz, double *chuki, double *longitude);
+static void
+before_nibun_from_jd(double tm, double tz, double *nibun, double *longitude);
+static int
+saku_from_jd(double tm, double tz, double *saku);
+static double
+longitude_of_sun(double t);
+static double
+longitude_of_moon(double t);
+static void
+jd2yearmonth(double jd, int *year, int *month);
+
+static PyObject *
+kyureki_from_date(PyObject *self, PyObject *args, PyObject *kwargs);
+static int module_exec(PyObject *module);
 
 static const double degToRad = Py_MATH_PI / 180.0;
+static const double jst_tz = 0.375;
+
+
+static PyMemberDef Kyureki_members[] = {
+    {"year", T_USHORT, offsetof(KyurekiObject, year), READONLY, NULL},
+    {"month", T_UBYTE, offsetof(KyurekiObject, month), READONLY, NULL},
+    {"leap_month", T_UBYTE, offsetof(KyurekiObject, leap_month), READONLY, NULL},
+    {"day", T_UBYTE, offsetof(KyurekiObject, day), READONLY, NULL},
+    {NULL}
+};
+
+
+static PyObject *
+Kyureki_from_ymd(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
+{
+    PyObject *year, *month, *day, *tz = NULL;
+    PyObject *date_type, *date, *from_date_args;
+    PyObject *self;
+
+    static char *kwlist[] = {"year", "month", "day", "tz", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OOO|O", kwlist,
+                                     &year, &month, &day, &tz)) { return NULL; }
+
+    date_type = PyObject_GetAttrString((PyObject *)subtype, "_date");
+    if (!date_type) { return NULL; }
+    date = PyObject_CallFunctionObjArgs(date_type, year, month, day, NULL);
+    Py_DECREF(date_type);
+    if (!date) { return NULL; }
+    if (tz == NULL) {
+        from_date_args = PyTuple_Pack(1, date);
+    } else {
+        from_date_args = PyTuple_Pack(2, date, tz);
+    }
+    Py_DECREF(date);
+    if (!from_date_args) { return NULL; }
+
+    self = Kyureki_from_date(subtype, from_date_args, NULL);
+    Py_DECREF(from_date_args);
+    return self;
+}
+
+
+static PyObject *
+Kyureki_from_date(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
+{
+    PyObject *t, *ret;
+
+    t = kyureki_from_date(NULL, args, kwargs);
+    if (!t) { return t; }
+
+    ret = Kyureki_new(subtype, t, NULL);
+    Py_DECREF(t);
+    return ret;
+}
+
+
+static PyObject *
+Kyureki_rokuyou(KyurekiObject *self, PyObject *args)
+{
+    PyObject *rokuyou_tuple, *rokuyou;
+    rokuyou_tuple = PyObject_GetAttrString((PyObject *)self, "ROKUYOU");
+    if (!rokuyou_tuple) { return NULL; }
+    rokuyou = PySequence_GetItem(rokuyou_tuple, (self->month + self->day) % 6);
+    Py_DECREF(rokuyou_tuple);
+    return rokuyou;
+}
+
+
+static PyMethodDef Kyureki_methods[] = {
+    {"from_ymd", (PyCFunction)Kyureki_from_ymd, METH_VARARGS|METH_KEYWORDS|METH_CLASS, NULL},
+    {"from_date", (PyCFunction)Kyureki_from_date, METH_VARARGS|METH_KEYWORDS|METH_CLASS, NULL},
+    {NULL, NULL, 0, NULL} /* Sentinel */
+};
+
+
+static PyGetSetDef Kyureki_getset[] = {
+    {"rokuyou", (getter)Kyureki_rokuyou, NULL, NULL, NULL},
+    {NULL} /* Sentinel */
+};
+
+
+static PyObject *
+Kyureki_new(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
+{
+    KyurekiObject *self;
+    unsigned short year;
+    unsigned char month, leap_month, day;
+    static char *kwlist[] = {"year", "month", "leap_month", "day", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "hbbb", kwlist,
+                                     &year, &month, &leap_month, &day)) { return NULL; }
+
+    self = PyObject_New(KyurekiObject, subtype);
+    if (!self) { return NULL; }
+    self->year = year;
+    self->month = month;
+    self->leap_month = leap_month;
+    self->day = day;
+
+    return (PyObject *)self;
+}
+
+
+static void
+Kyureki_dealloc(KyurekiObject *self)
+{
+    PyObject_Del(self);
+}
+
+
+static PyObject *
+Kyureki_repr(KyurekiObject *self)
+{
+    PyObject *classname = NULL, *ret = NULL;
+    classname = PyObject_GetAttrString((PyObject *)Py_TYPE(self), "__name__");
+    if (!classname) { return NULL; }
+    ret = PyUnicode_FromFormat("%U(%u, %u, %u, %u)",
+                               classname,
+                               self->year, self->month,
+                               self->leap_month, self->day);
+    Py_DECREF(classname);
+    return ret;
+}
+
+
+static PyObject *
+Kyureki_str(KyurekiObject *self)
+{
+    PyObject *template = NULL, *ret = NULL;
+    if (self->leap_month) {
+         template = PyUnicode_FromString("{:d}年閏{:d}月{:d}日");
+    } else {
+         template = PyUnicode_FromString("{:d}年{:d}月{:d}日");
+    }
+    if (!template) { return NULL; }
+    ret = PyObject_CallMethod(template, "format", "hbb", self->year, self->month, self->day);
+    Py_DECREF(template);
+    return ret;
+}
+
+
+static PyObject *
+Kyureki_richcompare(KyurekiObject *self, KyurekiObject *other, int op)
+{
+    PyObject *result;
+    int c;
+
+    if (!PyObject_IsInstance((PyObject *)other, (PyObject *)Py_TYPE(self))) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
+
+    switch (op) {
+        case Py_LT:
+            if (self->year < other->year) { c = 1; break; }
+            if (self->year > other->year) { c = 0; break; }
+            if (self->month < other->month) { c = 1; break; }
+            if (self->month > other->month) { c = 0; break; }
+            if (self->leap_month < other->leap_month) { c = 1; break; }
+            if (self->leap_month > other->leap_month) { c = 0; break; }
+            c = self->day < other->day;
+            break;
+        case Py_LE:
+            if (self->year < other->year) { c = 1; break; }
+            if (self->year > other->year) { c = 0; break; }
+            if (self->month < other->month) { c = 1; break; }
+            if (self->month > other->month) { c = 0; break; }
+            if (self->leap_month < other->leap_month) { c = 1; break; }
+            if (self->leap_month > other->leap_month) { c = 0; break; }
+            c = self->day <= other->day;
+            break;
+        case Py_EQ:
+            c = ((self->year == other->year) &&
+                 (self->month == other->month) &&
+                 (self->leap_month == other->leap_month) &&
+                 (self->day == other->day));
+            break;
+        case Py_NE:
+            c = ((self->year != other->year) ||
+                 (self->month != other->month) ||
+                 (self->leap_month != other->leap_month) ||
+                 (self->day != other->day));
+            break;
+        case Py_GT:
+            if (self->year > other->year) { c = 1; break; }
+            if (self->year < other->year) { c = 0; break; }
+            if (self->month > other->month) { c = 1; break; }
+            if (self->month < other->month) { c = 0; break; }
+            if (self->leap_month > other->leap_month) { c = 1; break; }
+            if (self->leap_month < other->leap_month) { c = 0; break; }
+            c = self->day > other->day;
+            break;
+        case Py_GE:
+            if (self->year > other->year) { c = 1; break; }
+            if (self->year < other->year) { c = 0; break; }
+            if (self->month > other->month) { c = 1; break; }
+            if (self->month < other->month) { c = 0; break; }
+            if (self->leap_month > other->leap_month) { c = 1; break; }
+            if (self->leap_month < other->leap_month) { c = 0; break; }
+            c = self->day >= other->day;
+            break;
+        default:
+            Py_RETURN_NOTIMPLEMENTED;
+    }
+
+    result = c ? Py_True: Py_False;
+    Py_INCREF(result);
+    return result;
+}
+
+
+static Py_hash_t
+Kyureki_hash(KyurekiObject *self)
+{
+    Py_hash_t ret;
+    PyObject *t;
+
+    t = Py_BuildValue("hbbb", self->year, self->month, self->leap_month, self->day);
+    if (!t) { return -1; }
+    ret = PyObject_Hash(t);
+    Py_DECREF(t);
+
+    return ret;
+}
+
+
+static PyType_Slot Kyureki_Type_slots[] = {
+    {Py_tp_doc, "Kyureki Type"},
+    {Py_tp_members, Kyureki_members},
+    {Py_tp_getset, Kyureki_getset},
+    {Py_tp_methods, Kyureki_methods},
+    {Py_tp_new, Kyureki_new},
+    {Py_tp_dealloc, Kyureki_dealloc},
+    {Py_tp_repr, Kyureki_repr},
+    {Py_tp_str, Kyureki_str},
+    {Py_tp_richcompare, Kyureki_richcompare},
+    {Py_tp_hash, Kyureki_hash},
+    {0, 0},
+};
+
+
+static PyType_Spec Kyureki_Type_spec = {
+    "_qreki.Kyureki",
+    sizeof(KyurekiObject),
+    0,
+    Py_TPFLAGS_DEFAULT,
+    Kyureki_Type_slots
+};
+
 
 static double
 normalize_angle(double angle)
@@ -48,54 +312,49 @@ normalize_angle(double angle)
     return angle;
 }
 
-static PyObject *
-kyureki_from_jd(PyObject *self, PyObject *args, PyObject *kwargs)
+
+static int
+kyureki_from_jd(int tm0, double tz, int *kyureki_year, int *kyureki_month,
+                int *kyureki_leap, int *kyureki_day)
 {
-    static char *kwlist[] = {"tm", "shinreki_ym", "tz", NULL};
-    double tm, tz;
-    int shinreki_year=0, shinreki_month=0;
-    int kyureki_year, kyureki_month, kyureki_leap, kyureki_day;
-    int tm0;
+    int shinreki_year, shinreki_month;
+    double tm;
     double chu[4][2];
     double saku[5];
-    int m[4][3];
+    int m[5][3];
     int leap;
     int i, state;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "dd|(ii)", kwlist,
-                &tm, &tz, &shinreki_year, &shinreki_month))
-        return NULL;
+    tm = (double)tm0;
 
-    tm0 = (int)tm;
-
-    before_nibun_from_jd2(tm, tz, &chu[0][0], &chu[0][1]);
+    before_nibun_from_jd(tm, tz, &chu[0][0], &chu[0][1]);
     for (i=1; i < 4; i++) {
-        chuki_from_jd2(chu[i-1][0] + 32.0, tz, &chu[i][0], &chu[i][1]);
+        chuki_from_jd(chu[i-1][0] + 32.0, tz, &chu[i][0], &chu[i][1]);
     }
 
-    if (saku_from_jd2(chu[0][0], tz, &saku[0]) == -1)
-        return NULL;
+    if (saku_from_jd(chu[0][0], tz, &saku[0]) == -1)
+        return -1;
 
     for (i=1; i < 5; i++) {
-        if (saku_from_jd2(saku[i-1] + 30.0, tz, &saku[i]) == -1)
-            return NULL;
+        if (saku_from_jd(saku[i-1] + 30.0, tz, &saku[i]) == -1)
+            return -1;
         if (abs((int)saku[i - 1] - (int)saku[i]) <= 26) {
-            if (saku_from_jd2(saku[i-1] + 35.0, tz, &saku[i]) == -1)
-                return NULL;
+            if (saku_from_jd(saku[i-1] + 35.0, tz, &saku[i]) == -1)
+                return -1;
         }
     }
 
     if ((int)(saku[1]) <= (int)(chu[0][0])) {
         for (i=0; i < 4; i++)
             saku[i] = saku[i+1];
-        if (saku_from_jd2(saku[3] + 35.0, tz, &saku[i]) == -1)
-            return NULL;
+        if (saku_from_jd(saku[3] + 35.0, tz, &saku[i]) == -1)
+            return -1;
     }
     else if((int)saku[0] > (int)chu[0][0]) {
         for (i=4; i > 0; i--)
             saku[i] = saku[i-1];
-        if (saku_from_jd2(saku[0] - 27.0, tz, &saku[i]) == -1)
-            return NULL;
+        if (saku_from_jd(saku[0] - 27.0, tz, &saku[i]) == -1)
+            return -1;
     }
 
     leap = ((int)saku[4] <= (int)chu[3][0]) ? 1 : 0;
@@ -115,8 +374,9 @@ kyureki_from_jd(PyObject *self, PyObject *args, PyObject *kwargs)
             }
         }
         m[i][0] = m[i-1][0] + 1;
-        if (m[i][0] > 12)
+        if (m[i][0] > 12) {
             m[i][0] -= 12;
+        }
         m[i][1] = 0;
         m[i][2] = (int)saku[i];
     }
@@ -136,38 +396,21 @@ kyureki_from_jd(PyObject *self, PyObject *args, PyObject *kwargs)
     if (state == 0 || state == 1)
         i -= 1;
 
-    kyureki_month = m[i][0];
-    kyureki_leap = m[i][1];
-    kyureki_day = tm0 - m[i][2] + 1;
+    *kyureki_month = m[i][0];
+    *kyureki_leap = m[i][1];
+    *kyureki_day = tm0 - m[i][2] + 1;
 
-    if (shinreki_year == 0)
-        jd2yearmonth2(tm, &shinreki_year, &shinreki_month);
+    jd2yearmonth(tm, &shinreki_year, &shinreki_month);
 
-    kyureki_year = shinreki_year;
-    if (kyureki_month > 9 && kyureki_month > shinreki_month)
-        kyureki_year -= 1;
+    *kyureki_year = shinreki_year;
+    if (*kyureki_month > 9 && *kyureki_month > shinreki_month)
+        *kyureki_year -= 1;
 
-    return Py_BuildValue(
-            "iiii", kyureki_year, kyureki_month, kyureki_leap, kyureki_day);
-}
-
-static PyObject *
-chuki_from_jd(PyObject *self, PyObject *args, PyObject *kwargs)
-{
-    static char *kwlist[] = {"tm", "tz", NULL};
-    double tm, tz;
-    double chuki, longitude;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "dd", kwlist, &tm, &tz))
-        return NULL;
-
-    chuki_from_jd2(tm, tz, &chuki, &longitude);
-    return Py_BuildValue("dd", chuki, longitude);
+    return 0;
 }
 
 static void
-chuki_from_jd2(
-        double tm, double tz, double *chuki, double *longitude)
+chuki_from_jd(double tm, double tz, double *chuki, double *longitude)
 {
     double tm1, tm2, t;
     double rm_sun, rm_sun0;
@@ -177,7 +420,7 @@ chuki_from_jd2(
     tm2 -= tz;
 
     t = (tm2 + 0.5) / 36525.0 + (tm1 - 2451545.0) / 36525.0;
-    rm_sun = longitude_of_sun2(t);
+    rm_sun = longitude_of_sun(t);
     rm_sun0 = rm_sun - fmod(rm_sun, 30.0);
 
     delta_t1 = 0.0;
@@ -185,7 +428,7 @@ chuki_from_jd2(
 
     while (fabs(delta_t1 + delta_t2) > 1.0 / 86400.0) {
         t = (tm2 + 0.5) / 36525.0 + (tm1 - 2451545.0)/ 36525.0;
-        rm_sun = longitude_of_sun2(t);
+        rm_sun = longitude_of_sun(t);
 
         delta_rm = rm_sun - rm_sun0;
         if (delta_rm > 180.0) {
@@ -205,29 +448,15 @@ chuki_from_jd2(
             tm1 -= 1.0;
         }
     }
-    
+
     *chuki = tm1 + tm2 + tz;
     *longitude = rm_sun0;
     return;
 }
 
-static PyObject *
-before_nibun_from_jd(PyObject *self, PyObject *args, PyObject *kwargs)
-{
-    static char *kwlist[] = {"tm", "tz", NULL};
-    double tm, tz;
-    double nibun, longitude;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "dd", kwlist, &tm, &tz))
-        return NULL;
-
-    before_nibun_from_jd2(tm, tz, &nibun, &longitude);
-    return Py_BuildValue("dd", nibun, longitude);
-}
 
 static void
-before_nibun_from_jd2(
-        double tm, double tz, double *nibun, double *longitude)
+before_nibun_from_jd(double tm, double tz, double *nibun, double *longitude)
 {
     double tm1, tm2, t;
     double rm_sun, rm_sun0;
@@ -238,7 +467,7 @@ before_nibun_from_jd2(
     tm2 -= tz;
 
     t = (tm2 + 0.5) / 36525.0 + (tm1 - 2451545.0) / 36525.0;
-    rm_sun = longitude_of_sun2(t);
+    rm_sun = longitude_of_sun(t);
     rm_sun0 = rm_sun - fmod(rm_sun, 90.0);
 
     delta_t1 = 0.0;
@@ -246,7 +475,7 @@ before_nibun_from_jd2(
 
     while (fabs(delta_t1 + delta_t2) > 1.0 / 86400.0) {
         t = (tm2 + 0.5) / 36525.0 + (tm1 - 2451545.0)/ 36525.0;
-        rm_sun = longitude_of_sun2(t);
+        rm_sun = longitude_of_sun(t);
 
         delta_rm = rm_sun - rm_sun0;
         if (delta_rm > 180.0) {
@@ -266,30 +495,15 @@ before_nibun_from_jd2(
             tm1 -= 1.0;
         }
     }
-    
+
     *nibun = tm1 + tm2 + tz;
     *longitude = rm_sun0;
     return;
 }
 
-static PyObject *
-saku_from_jd(PyObject *self, PyObject *args, PyObject *kwargs)
-{
-    static char *kwlist[] = {"tm", "tz", NULL};
-    double tm, tz;
-    double saku;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "dd", kwlist, &tm, &tz))
-        return NULL;
-
-    if (saku_from_jd2(tm, tz, &saku) == -1)
-        return NULL;
-
-    return PyFloat_FromDouble(saku);
-}
 
 static int
-saku_from_jd2(double tm, double tz, double *saku)
+saku_from_jd(double tm, double tz, double *saku)
 {
     double tm1, tm2, t;
     double rm_sun, rm_moon;
@@ -305,8 +519,8 @@ saku_from_jd2(double tm, double tz, double *saku)
 
     for (lc = 1; lc < 30; lc++) {
         t = (tm2 + 0.5) / 36525.0 + (tm1 - 2451545.0)/ 36525.0;
-        rm_sun = longitude_of_sun2(t);
-        rm_moon = longitude_of_moon2(t);
+        rm_sun = longitude_of_sun(t);
+        rm_moon = longitude_of_moon(t);
 
         delta_rm = rm_moon - rm_sun;
         if (lc == 1 && delta_rm < 0.0) {
@@ -340,7 +554,7 @@ saku_from_jd2(double tm, double tz, double *saku)
             break;
         }
     }
-    
+
     if (lc >= 30) {
         PyErr_SetString(PyExc_ValueError, "");
         return -1;
@@ -350,20 +564,9 @@ saku_from_jd2(double tm, double tz, double *saku)
     return 0;
 }
 
-static PyObject *
-longitude_of_sun(PyObject *self, PyObject *args, PyObject *kwargs)
-{
-    static char *kwlist[] = {"t", NULL};
-    double t;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "d", kwlist, &t))
-        return NULL;
-
-    return PyFloat_FromDouble(longitude_of_sun2(t));
-}
 
 static double
-longitude_of_sun2(double t)
+longitude_of_sun(double t)
 {
     double ang, th;
 
@@ -407,20 +610,9 @@ longitude_of_sun2(double t)
     return th;
 }
 
-static PyObject *
-longitude_of_moon(PyObject *self, PyObject *args, PyObject *kwargs)
-{
-    static char *kwlist[] = {"t", NULL};
-    double t;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "d", kwlist, &t))
-        return NULL;
-
-    return PyFloat_FromDouble(longitude_of_moon2(t));
-}
 
 static double
-longitude_of_moon2(double t)
+longitude_of_moon(double t)
 {
     double ang, th;
 
@@ -554,22 +746,9 @@ longitude_of_moon2(double t)
     return th;
 }
 
-static PyObject *
-jd2yearmonth(PyObject *self, PyObject *args, PyObject *kwargs) {
-    static char *kwlist[] = {"jd", NULL};
-    double jd;
-    int year, month;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "d", kwlist, &jd))
-        return NULL;
-
-    jd2yearmonth2(jd, &year, &month);
-
-    return Py_BuildValue("ii", year, month);
-}
 
 static void
-jd2yearmonth2(double jd, int *year, int *month)
+jd2yearmonth(double jd, int *year, int *month)
 {
     double f0, f1, f2, f3, f4, f5, f6;
     int i1, i3, i5, i6;
@@ -593,36 +772,116 @@ jd2yearmonth2(double jd, int *year, int *month)
     return;
 }
 
+
+static PyObject *
+kyureki_from_date(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = {"date", "tz", NULL};
+    PyObject *date;
+    long ordinal, tm0;
+    double tz = jst_tz;
+    PyObject *ordinal_obj;
+    int kyureki_year, kyureki_month, kyureki_leap, kyureki_day, error;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|d", kwlist, &date, &tz)) {
+        return NULL;
+    }
+
+    if ((ordinal_obj = PyObject_CallMethod(date, "toordinal", NULL)) == NULL) {
+        return NULL;
+    }
+    ordinal = PyLong_AsLong(ordinal_obj);
+    Py_DECREF(ordinal_obj);
+    if (PyErr_Occurred()) { return NULL; }
+
+    tm0 = ordinal + 1721424;
+
+    error = kyureki_from_jd(tm0, tz, &kyureki_year, &kyureki_month,
+                            &kyureki_leap, &kyureki_day);
+    if (error) { return NULL; }
+
+    return Py_BuildValue("hbbb", kyureki_year, kyureki_month, kyureki_leap,
+                         kyureki_day);
+}
+
+
 static PyMethodDef module_methods[] = {
-    {"_kyureki_from_jd", (PyCFunction)kyureki_from_jd,
-     METH_VARARGS | METH_KEYWORDS,
-     "calculate kyureki."},
-    {"_chuki_from_jd", (PyCFunction)chuki_from_jd,
-     METH_VARARGS | METH_KEYWORDS,
-     "calculate chuki."},
-    {"_before_nibun_from_jd", (PyCFunction)before_nibun_from_jd,
-     METH_VARARGS | METH_KEYWORDS,
-     "calculate before nibun."},
-    {"_saku_from_jd", (PyCFunction)saku_from_jd,
-     METH_VARARGS | METH_KEYWORDS,
-     "calculate saku."},
-    {"_longitude_of_sun", (PyCFunction)longitude_of_sun,
-     METH_VARARGS | METH_KEYWORDS,
-     "calculate longitude of sun."},
-    {"_longitude_of_moon", (PyCFunction)longitude_of_moon,
-     METH_VARARGS | METH_KEYWORDS,
-     "calculate longitude of moon."},
-    {"_jd2yearmonth", (PyCFunction)jd2yearmonth,
-     METH_VARARGS | METH_KEYWORDS,
-     "calculate shinreki year and shinreki month from jd."},
+    {"kyureki_from_date", (PyCFunction)kyureki_from_date,
+     METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
 
-PyMODINIT_FUNC
-init_qreki(void) {
-    PyObject* m;
 
-    m = Py_InitModule3("_qreki", module_methods,
-                       "calculate longitude of sun, moon.");
-    if (m == NULL) return;
+static int module_exec(PyObject *module)
+{
+    PyObject *kyureki_type = NULL;
+    PyObject *rokuyou = NULL;
+    static Py_UCS4 taian[] = {0x5927, 0x5b89}; /* 大安 */
+    static Py_UCS4 shakkou[] = {0x8d64, 0x53e3}; /* 赤口 */
+    static Py_UCS4 sensho[] = {0x5148, 0x52dd}; /* 先勝 */
+    static Py_UCS4 tomobiki[] = {0x53cb, 0x5f15}; /* 友引 */
+    static Py_UCS4 senpu[] = {0x5148, 0x8ca0}; /* 先負 */
+    static Py_UCS4 butsumetsu[] = {0x4ecf, 0x6ec5}; /* 仏滅 */
+    PyObject *datetime_module = NULL;
+    PyObject *date_type = NULL;
+
+    kyureki_type = PyType_FromSpec(&Kyureki_Type_spec);
+    if (!kyureki_type) { goto fail; }
+
+    /* Kyureki.ROKUYOU */
+    rokuyou = Py_BuildValue("u#u#u#u#u#u#",
+                            taian, 2, shakkou, 2, sensho, 2,
+                            tomobiki, 2, senpu, 2, butsumetsu, 2);
+    if (!rokuyou) { goto fail; }
+    if (PyObject_SetAttrString(kyureki_type, "ROKUYOU", rokuyou)) { goto fail; }
+    Py_DECREF(rokuyou);
+    rokuyou = NULL;
+
+    /* Kyureki._date = datetime.date */
+    datetime_module = PyImport_ImportModule("datetime");
+    if (!datetime_module) { goto fail; }
+    date_type = PyObject_GetAttrString(datetime_module, "date");
+    Py_DECREF(datetime_module);
+    datetime_module = NULL;
+    if (!date_type) { goto fail; }
+    if (PyObject_SetAttrString(kyureki_type, "_date", date_type)) { goto fail; }
+    Py_DECREF(date_type);
+    date_type = NULL;
+
+    if(PyModule_AddObject(module, "Kyureki", kyureki_type)) { goto fail; }
+
+    return 0;
+fail:
+    Py_XDECREF(kyureki_type);
+    Py_XDECREF(rokuyou);
+    Py_XDECREF(datetime_module);
+    Py_XDECREF(date_type);
+    Py_XDECREF(module);
+
+    return -1;
+}
+
+
+static PyModuleDef_Slot module_slots[] = {
+    {Py_mod_exec, module_exec},
+    {0, NULL}
+};
+
+
+static struct PyModuleDef qreki_module = {
+    PyModuleDef_HEAD_INIT,
+    "_qreki",       /* m_name */
+    NULL,           /* m_doc */
+    0,              /* m_size */
+    module_methods, /* m_methods */
+    module_slots,   /* m_slots */
+    NULL,           /* m_traverse */
+    NULL,           /* m_clear */
+    NULL            /* m_free */
+};
+
+
+PyMODINIT_FUNC PyInit__qreki(void)
+{
+    return PyModuleDef_Init(&qreki_module);
 }

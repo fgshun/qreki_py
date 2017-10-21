@@ -1,4 +1,4 @@
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 
 py_modules = ['qreki']
 ext_modules = [
@@ -6,7 +6,7 @@ ext_modules = [
 
 setup(
     name='qreki',
-    version='0.4.6',
+    version='0.5',
     description='Qreki',
     py_modules=py_modules,
     ext_modules=ext_modules)
