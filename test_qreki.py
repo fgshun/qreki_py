@@ -1,154 +1,131 @@
 import datetime
 import qreki
 
-
-def test_from_ymd():
-    o1 = qreki._Kyureki.from_ymd(2017, 10, 15)
-    assert o1.year == 2017
-    assert o1.month == 8
-    assert o1.leap_month == 0
-    assert o1.day == 26
-
-    o2 = qreki.Kyureki.from_ymd(2017, 10, 15)
-    assert o2.year == o1.year
-    assert o2.month == o1.month
-    assert o2.leap_month == o1.leap_month
-    assert o2.day == o1.day
+import pytest
 
 
-def test_from_date():
-    o1 = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
-    assert o1.year == 2017
-    assert o1.month == 8
-    assert o1.leap_month == 0
-    assert o1.day == 26
-
-    o2 = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
-    assert o2.year == o1.year
-    assert o2.month == o1.month
-    assert o2.leap_month == o1.leap_month
-    assert o2.day == o1.day
+classes = [qreki._Kyureki]
+ids = ['python']
+if qreki._Kyureki is not qreki.Kyureki:
+    classes.append(qreki.Kyureki)
+    ids.append('c_extension')
 
 
-def test_rokuyou():
-    assert qreki._Kyureki.ROKUYOU == ('大安', '赤口', '先勝', '友引', '先負', '仏滅')
-    assert qreki._Kyureki.ROKUYOU == qreki.Kyureki.ROKUYOU
+@pytest.fixture(scope='module', params=classes, ids=ids)
+def kyureki_cls(request):
+    yield request.param
 
-    o1 = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
-    assert o1.rokuyou == '先負';
 
-    o2 = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
-    assert o2.rokuyou == o1.rokuyou
+def date_range(start, end, delta=datetime.timedelta(days=1)):
+    d = start
+    while d < end:
+        yield d
+        d += delta
 
+
+@pytest.fixture()
+def dates_iter():
+    start = datetime.date(2017, 1, 1)
+    end = datetime.date(2018, 1, 1)
+    return date_range(start, end)
+
+
+def test_diff_cextension_purepython(dates_iter):
+    if qreki._Kyureki is qreki.Kyureki:
+        pytest.skip("c extension is not installed")
+
+    for date in dates_iter:
+        p = qreki.Kyureki.from_date(date)
+        c = qreki._Kyureki.from_date(date)
+        assert p.year == c.year
+        assert p.month == c.month
+        assert p.leap_month == c.leap_month
+        assert p.day == c.day
+        assert p.rokuyou == c.rokuyou
+        assert str(p) == str(c)
+        assert repr(p) == repr(c)
+        assert hash(p) == hash(c)
+
+
+def test_from_ymd(kyureki_cls):
+    o = kyureki_cls.from_ymd(2017, 10, 15)
+    assert o.year == 2017
+    assert o.month == 8
+    assert o.leap_month == 0
+    assert o.day == 26
+
+
+def test_from_date(kyureki_cls):
+    o = kyureki_cls.from_date(datetime.date(2017, 10, 15))
+    assert o.year == 2017
+    assert o.month == 8
+    assert o.leap_month == 0
+    assert o.day == 26
+
+
+def test_rokuyou(kyureki_cls):
+    assert kyureki_cls.ROKUYOU == ('大安', '赤口', '先勝', '友引', '先負', '仏滅')
+
+    o = kyureki_cls.from_date(datetime.date(2017, 10, 15))
+    assert o.rokuyou == '先負';
+
+
+def test_repr(kyureki_cls):
+    o = kyureki_cls.from_date(datetime.date(2017, 10, 15))
+    assert repr(o) == "Kyureki(2017, 8, 0, 26)"
+
+
+def test_str(kyureki_cls):
+    o = kyureki_cls.from_date(datetime.date(2017, 10, 15))
+    assert str(o) == "2017年8月26日"
+
+
+def test_cmp(kyureki_cls):
+    o = kyureki_cls.from_date(datetime.date(2017, 10, 15))
+    ob = kyureki_cls.from_date(datetime.date(2017, 10, 16))
+    os = kyureki_cls.from_date(datetime.date(2017, 10, 14))
+    oe = kyureki_cls.from_date(datetime.date(2017, 10, 15))
+
+    assert o < ob
+    assert o <= ob
+    assert not o == ob
+    assert o != ob
+    assert not o > ob
+    assert not o >= ob
+
+    assert not o < os
+    assert not o <= os
+    assert not o == os
+    assert o != os
+    assert o > os
+    assert o >= os
+
+    assert not o < oe
+    assert o <= oe
+    assert o == oe
+    assert not o != oe
+    assert not o > oe
+    assert o >= oe
+
+
+def test_hash(kyureki_cls):
+    o = kyureki_cls.from_date(datetime.date(2017, 10, 15))
+    ob = kyureki_cls.from_date(datetime.date(2017, 10, 16))
+    oe = kyureki_cls.from_date(datetime.date(2017, 10, 15))
+
+
+    assert hash(o) != hash(ob)
+    assert hash(o) == hash(oe)
+
+    d = {}
+    d[o] = 1
+    d[ob] = 2
+    d[oe] = 3
+    assert len(d) == 2
+    assert d[ob] == 2
+    assert d[o] == 3
+
+
+def test_module_func():
     assert qreki.rokuyou_from_ymd(2017, 10, 15) == '先負'
     assert qreki.rokuyou_from_date(datetime.date(2017, 10, 15)) == '先負'
-
-
-def test_repr():
-    o1 = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
-    assert repr(o1) == "Kyureki(2017, 8, 0, 26)"
-
-    o2 = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
-    assert repr(o2) == repr(o1)
-
-
-def test_str():
-    o1 = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
-    assert str(o1) == "2017年8月26日"
-
-    o2 = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
-    assert str(o2) == str(o1)
-
-
-def test_cmp():
-    o1 = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
-    o1b = qreki._Kyureki.from_date(datetime.date(2017, 10, 16))
-    o1s = qreki._Kyureki.from_date(datetime.date(2017, 10, 14))
-    o1e = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
-
-    o2 = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
-    o2b = qreki.Kyureki.from_date(datetime.date(2017, 10, 16))
-    o2s = qreki.Kyureki.from_date(datetime.date(2017, 10, 14))
-    o2e = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
-
-    assert o1 < o1b
-    assert o1 <= o1b
-    assert not o1 == o1b
-    assert o1 != o1b
-    assert not o1 > o1b
-    assert not o1 >= o1b
-
-    assert not o1 < o1s
-    assert not o1 <= o1s
-    assert not o1 == o1s
-    assert o1 != o1s
-    assert o1 > o1s
-    assert o1 >= o1s
-
-    assert not o1 < o1e
-    assert o1 <= o1e
-    assert o1 == o1e
-    assert not o1 != o1e
-    assert not o1 > o1e
-    assert o1 >= o1e
-
-    assert o2 < o2b
-    assert o2 <= o2b
-    assert not o2 == o2b
-    assert o2 != o2b
-    assert not o2 > o2b
-    assert not o2 >= o2b
-
-    assert not o2 < o2s
-    assert not o2 <= o2s
-    assert not o2 == o2s
-    assert o2 != o2s
-    assert o2 > o2s
-    assert o2 >= o2s
-
-    assert not o2 < o2e
-    assert o2 <= o2e
-    assert o2 == o2e
-    assert not o2 != o2e
-    assert not o2 > o2e
-    assert o2 >= o2e
-
-
-def test_hash():
-    o1 = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
-    o1b = qreki._Kyureki.from_date(datetime.date(2017, 10, 16))
-    o1e = qreki._Kyureki.from_date(datetime.date(2017, 10, 15))
-
-    o2 = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
-    o2b = qreki.Kyureki.from_date(datetime.date(2017, 10, 16))
-    o2e = qreki.Kyureki.from_date(datetime.date(2017, 10, 15))
-
-
-    assert hash(o1) != hash(o1b)
-    assert hash(o1) == hash(o1e)
-    assert hash(o2) != hash(o2b)
-    assert hash(o2) == hash(o2e)
-    assert hash(o1) == hash(o2)
-
-    d = {}
-    d[o1] = 1
-    d[o1b] = 2
-    d[o1e] = 3
-    assert len(d) == 2
-    assert d[o1b] == 2
-    assert d[o1] == 3
-
-    d = {}
-    d[o1] = 1
-    d[o1b] = 2
-    d[o1e] = 3
-    assert len(d) == 2
-    assert d[o1b] == 2
-    assert d[o1] == 3
-
-    d = {}
-    d[o1] = 1
-    d[o2] = 2
-    assert len(d) == 2
-    assert d[o1] == 1
-    assert d[o2] == 2
