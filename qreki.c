@@ -848,7 +848,7 @@ static int module_exec(PyObject *module)
     Py_DECREF(date_type);
     date_type = NULL;
 
-    if(PyModule_AddObject(module, "Kyureki", kyureki_type)) { goto fail; }
+    if (PyModule_AddObject(module, "Kyureki", kyureki_type)) { goto fail; }
 
     return 0;
 fail:

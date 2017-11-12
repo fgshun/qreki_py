@@ -43,7 +43,7 @@ https://github.com/fgshun/qreki_py
 http://d.hatena.ne.jp/fgshun/
 """
 
-VERSION_INFO = (0, 5, 0)
+VERSION_INFO = (0, 5, 1)
 VERSION = '.'.join(map(str, VERSION_INFO))
 ORGINAL_VERSION_INFO = (1, 1)
 ORGINAL_VERSION = '.'.join(map(str, ORGINAL_VERSION_INFO))
