@@ -1,8 +1,8 @@
 import datetime
-import qreki
 
 import pytest
 
+import qreki
 
 classes = [qreki._Kyureki]
 ids = ['python']
@@ -67,7 +67,7 @@ def test_rokuyou(kyureki_cls):
     assert kyureki_cls.ROKUYOU == ('大安', '赤口', '先勝', '友引', '先負', '仏滅')
 
     o = kyureki_cls.from_date(datetime.date(2017, 10, 15))
-    assert o.rokuyou == '先負';
+    assert o.rokuyou == '先負'
 
 
 def test_repr(kyureki_cls):
@@ -112,7 +112,6 @@ def test_hash(kyureki_cls):
     o = kyureki_cls.from_date(datetime.date(2017, 10, 15))
     ob = kyureki_cls.from_date(datetime.date(2017, 10, 16))
     oe = kyureki_cls.from_date(datetime.date(2017, 10, 15))
-
 
     assert hash(o) != hash(ob)
     assert hash(o) == hash(oe)

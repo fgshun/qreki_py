@@ -1,5 +1,5 @@
-import math
 import datetime
+import math
 
 """新暦、旧暦変換 qreki.py
 
@@ -48,8 +48,8 @@ VERSION = '.'.join(map(str, VERSION_INFO))
 ORGINAL_VERSION_INFO = (1, 1)
 ORGINAL_VERSION = '.'.join(map(str, ORGINAL_VERSION_INFO))
 
-DEG_TO_RAD = math.pi / 180.0 # （角度の）度からラジアンに変換する係数
-TZ = 0.375 # +9.0/24.0 (JST)
+DEG_TO_RAD = math.pi / 180.0  # （角度の）度からラジアンに変換する係数
+TZ = 0.375  # +9.0/24.0 (JST)
 
 __all__ = ['Kyureki', 'rokuyou_from_ymd', 'rokuyou_from_date']
 
@@ -80,19 +80,17 @@ class Kyureki:
     @classmethod
     def from_date(cls, date, tz=TZ):
         """datetime.date より旧暦を得る"""
-        kyureki =  _kyureki_from_date(date, tz)
+        kyureki = _kyureki_from_date(date, tz)
         return cls(*kyureki)
 
     @property
     def year(self):
         """旧暦の年"""
-
         return self._year
 
     @property
     def month(self):
         """旧暦の月"""
-
         return self._month
 
     @property
@@ -100,13 +98,11 @@ class Kyureki:
         """閏月フラグ
 
         0 ならば通常の月、 1 ならば閏月を表す。"""
-
         return self._leap_month
 
     @property
     def day(self):
         """旧暦の日"""
-
         return self._day
 
     @property
@@ -114,7 +110,6 @@ class Kyureki:
         """六曜を得る
 
         戻り値は六曜 (大安, 赤口, 先勝, 友引, 先負, 仏滅) の文字列。"""
-
         return self.ROKUYOU[(self.month + self.day) % 6]
 
     def __repr__(self):
@@ -353,7 +348,6 @@ def _chuki_from_jd(tm, tz):
     戻り値:
         中気の時刻（ローカル補正込みのユリウス通日）と
         その時の黄経のタプル"""
-
     # 時刻引数を分解する
     tm2, tm1 = math.modf(tm)
 
@@ -407,7 +401,6 @@ def _before_nibun_from_jd(tm, tz):
     戻り値:
         二分二至の時刻（ローカル補正込みのユリウス通日）と
         その時の黄経のタプル"""
-
     # 時刻引数を分解する
     tm2, tm1 = math.modf(tm)
 
@@ -462,7 +455,6 @@ def _saku_from_jd(tm, tz):
         tm: 計算対象となる時刻（ローカル補正込みのユリウス通日）
     戻り値:
         朔の時刻（ローカル補正込みのユリウス通日）"""
-
     # 時刻引数を分解する
     tm2, tm1 = math.modf(tm)
 
@@ -535,7 +527,6 @@ def _longitude_of_sun(t):
         tm: 計算対象となる時刻 (AJD) / 36525.0
     戻り値:
         太陽の黄経 λsun"""
-
     k = DEG_TO_RAD
     cos = math.cos
 
@@ -588,7 +579,6 @@ def _longitude_of_moon(t):
         tm: 計算対象となる時刻 (AJD) / 36525.0
     戻り値:
         月の黄経 λmoon"""
-
     k = DEG_TO_RAD
     cos = math.cos
 
@@ -745,7 +735,6 @@ def rokuyou_from_ymd(year, month, day):
     旧暦も必要とする場合、 Kyureki.from_ymd(year, month, day) で
     旧暦オブジェクトをつくり、
     これの rokuyou() メソッドを呼ぶほうが効率がよい。"""
-
     kyureki = Kyureki.from_ymd(year, month, day)
     return kyureki.rokuyou
 
@@ -761,7 +750,6 @@ def rokuyou_from_date(date):
     旧暦も必要とする場合、 Kyureki.from_date(date) で
     旧暦オブジェクトをつくり、
     これの rokuyou() メソッドを呼ぶほうが効率がよい。"""
-
     kyureki = Kyureki.from_date(date)
     return kyureki.rokuyou
 
@@ -773,12 +761,14 @@ def main():
     parser.add_argument('year', nargs='?', type=int)
     parser.add_argument('month', nargs='?', type=int)
     parser.add_argument('day', nargs='?', type=int)
-    parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
+    parser.add_argument('--version',
+                        action='version',
+                        version='%(prog)s ' + VERSION)
     args = parser.parse_args()
 
     def _print_date(shinreki, kyureki):
-        print('{0:d}年{1:d}月{2:d}日 {3}'.format(
-                shinreki.year, shinreki.month, shinreki.day, kyureki))
+        print('{0.year:d}年{0.month:d}月{0.day:d}日 {1}'.format(
+              shinreki, kyureki))
 
     if args.year is None:
         d = datetime.date.today()
@@ -805,6 +795,7 @@ def main():
         d = datetime.date(args.year, args.month, args.day)
         k = Kyureki.from_date(d)
         _print_date(d, k)
+
 
 if __name__ == '__main__':
     main()
