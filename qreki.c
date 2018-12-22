@@ -181,9 +181,9 @@ Kyureki_str(KyurekiObject *self)
 {
     PyObject *template = NULL, *ret = NULL;
     if (self->leap_month) {
-         template = PyUnicode_FromString("{:d}年閏{:d}月{:d}日");
+        template = PyObject_GetAttrString((PyObject *)self, "_str_leap_template");
     } else {
-         template = PyUnicode_FromString("{:d}年{:d}月{:d}日");
+        template = PyObject_GetAttrString((PyObject *)self, "_str_template");
     }
     if (!template) { return NULL; }
     ret = PyObject_CallMethod(template, "format", "hbb", self->year, self->month, self->day);
@@ -814,51 +814,52 @@ static PyMethodDef module_methods[] = {
 
 static int module_exec(PyObject *module)
 {
+    int ret = -1;
     PyObject *kyureki_type = NULL;
     PyObject *rokuyou = NULL;
-    static Py_UCS4 taian[] = {0x5927, 0x5b89}; /* 大安 */
-    static Py_UCS4 shakkou[] = {0x8d64, 0x53e3}; /* 赤口 */
-    static Py_UCS4 sensho[] = {0x5148, 0x52dd}; /* 先勝 */
-    static Py_UCS4 tomobiki[] = {0x53cb, 0x5f15}; /* 友引 */
-    static Py_UCS4 senpu[] = {0x5148, 0x8ca0}; /* 先負 */
-    static Py_UCS4 butsumetsu[] = {0x4ecf, 0x6ec5}; /* 仏滅 */
+    PyObject *str_template = NULL;
+    PyObject *str_leap_template = NULL;
     PyObject *datetime_module = NULL;
     PyObject *date_type = NULL;
 
     kyureki_type = PyType_FromSpec(&Kyureki_Type_spec);
-    if (!kyureki_type) { goto fail; }
+    if (!kyureki_type) { goto cleanup; }
 
     /* Kyureki.ROKUYOU */
-    rokuyou = Py_BuildValue("u#u#u#u#u#u#",
-                            taian, 2, shakkou, 2, sensho, 2,
-                            tomobiki, 2, senpu, 2, butsumetsu, 2);
-    if (!rokuyou) { goto fail; }
-    if (PyObject_SetAttrString(kyureki_type, "ROKUYOU", rokuyou)) { goto fail; }
-    Py_DECREF(rokuyou);
-    rokuyou = NULL;
+    rokuyou = Py_BuildValue("ssssss", "大安", "赤口", "先勝", "友引", "先負", "仏滅");
+    if (!rokuyou) { goto cleanup; }
+    if (PyObject_SetAttrString(kyureki_type, "ROKUYOU", rokuyou)) { goto cleanup; }
+
+    /* Kyureki._str_template */
+    str_template = PyUnicode_FromString("{:d}年{:d}月{:d}日");
+    if (!str_template) { goto cleanup; }
+    if (PyObject_SetAttrString(kyureki_type, "_str_template", str_template)) { goto cleanup; }
+
+    /* Kyureki._str_leap_template */
+    str_leap_template = PyUnicode_FromString("{:d}年閏{:d}月{:d}日");
+    if (!str_leap_template) { goto cleanup; }
+    if (PyObject_SetAttrString(kyureki_type, "_str_leap_template", str_leap_template)) { goto cleanup; }
 
     /* Kyureki._date = datetime.date */
     datetime_module = PyImport_ImportModule("datetime");
-    if (!datetime_module) { goto fail; }
+    if (!datetime_module) { goto cleanup; }
     date_type = PyObject_GetAttrString(datetime_module, "date");
-    Py_DECREF(datetime_module);
-    datetime_module = NULL;
-    if (!date_type) { goto fail; }
-    if (PyObject_SetAttrString(kyureki_type, "_date", date_type)) { goto fail; }
-    Py_DECREF(date_type);
-    date_type = NULL;
+    if (!date_type) { goto cleanup; }
+    if (PyObject_SetAttrString(kyureki_type, "_date", date_type)) { goto cleanup; }
 
-    if (PyModule_AddObject(module, "Kyureki", kyureki_type)) { goto fail; }
+    if (PyObject_SetAttrString(module, "Kyureki", kyureki_type)) { goto cleanup; }
 
-    return 0;
-fail:
-    Py_XDECREF(kyureki_type);
-    Py_XDECREF(rokuyou);
-    Py_XDECREF(datetime_module);
+    ret = 0;
+cleanup:
     Py_XDECREF(date_type);
-    Py_XDECREF(module);
+    Py_XDECREF(datetime_module);
+    Py_XDECREF(str_leap_template);
+    Py_XDECREF(str_template);
+    Py_XDECREF(rokuyou);
+    Py_XDECREF(kyureki_type);
+    if (ret) { Py_XDECREF(module); }
 
-    return -1;
+    return ret;
 }
 
 
@@ -870,14 +871,9 @@ static PyModuleDef_Slot module_slots[] = {
 
 static struct PyModuleDef qreki_module = {
     PyModuleDef_HEAD_INIT,
-    "_qreki",       /* m_name */
-    NULL,           /* m_doc */
-    0,              /* m_size */
-    module_methods, /* m_methods */
-    module_slots,   /* m_slots */
-    NULL,           /* m_traverse */
-    NULL,           /* m_clear */
-    NULL            /* m_free */
+    .m_name = "_qreki",
+    .m_methods = module_methods,
+    .m_slots = module_slots,
 };
 
 
