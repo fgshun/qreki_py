@@ -18,6 +18,19 @@
 '仏滅'
 ```
 
+## Install
+```
+pip install git+https://github.com/fgshun/qreki_py#egg=qreki
+```
+
+### Install on Windows
+```
+# Python 3.7
+pip install https://github.com/fgshun/qreki_py/releases/download/v0.5.1/qreki-0.5.1-cp37-cp37m-win_amd64.whl
+# Python 3.6
+pip install https://github.com/fgshun/qreki_py/releases/download/v0.5.1/qreki-0.5.1-cp36-cp36m-win_amd64.whl
+```
+
 ## qreki.py の元となった QREKI.AWK について
 qreki.py で用いている旧暦算出方法は高野 英明氏の QREKI.AWK から得たものです。
 
