@@ -48,6 +48,8 @@ static void
 jd2yearmonth(double jd, int *year, int *month);
 
 static PyObject *
+kyureki_from_date_inner(PyObject *args, PyObject *kwargs);
+static PyObject *
 kyureki_from_date(PyObject *self, PyObject *args, PyObject *kwargs);
 static int module_exec(PyObject *module);
 
@@ -99,7 +101,7 @@ Kyureki_from_date(PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
 {
     PyObject *t, *ret;
 
-    t = kyureki_from_date(NULL, args, kwargs);
+    t = kyureki_from_date_inner(args, kwargs);
     if (!t) { return t; }
 
     ret = Kyureki_new(subtype, t, NULL);
@@ -774,7 +776,7 @@ jd2yearmonth(double jd, int *year, int *month)
 
 
 static PyObject *
-kyureki_from_date(PyObject *self, PyObject *args, PyObject *kwargs)
+kyureki_from_date_inner(PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = {"date", "tz", NULL};
     PyObject *date;
@@ -802,6 +804,13 @@ kyureki_from_date(PyObject *self, PyObject *args, PyObject *kwargs)
 
     return Py_BuildValue("hbbb", kyureki_year, kyureki_month, kyureki_leap,
                          kyureki_day);
+}
+
+
+static PyObject *
+kyureki_from_date(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    return kyureki_from_date_inner(args, kwargs);
 }
 
 
