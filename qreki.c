@@ -39,7 +39,6 @@ kyureki_from_date_inner(PyObject *date, double tz);
 
 static const double degToRad = Py_MATH_PI / 180.0;
 #define QREKI_JST_TZ 0.375
-static const double jst_tz = QREKI_JST_TZ;
 
 #include "clinic/qreki.c.h"
 
@@ -60,13 +59,13 @@ qreki.Kyureki.from_ymd as Kyureki_from_ymd
     year: int
     month: int
     day: int
-    tz: double(c_default="QREKI_JST_TZ") = qreki.jst_tz
+    tz: double(c_default="QREKI_JST_TZ") = qreki.TZ
 [clinic start generated code]*/
 
 static PyObject *
 Kyureki_from_ymd_impl(PyTypeObject *type, int year, int month, int day,
                       double tz)
-/*[clinic end generated code: output=d20af7563e6320d3 input=da98126da4bf805b]*/
+/*[clinic end generated code: output=d20af7563e6320d3 input=e36840b1a34e8693]*/
 {
     PyObject *date;
     PyObject *self;
@@ -86,12 +85,12 @@ Kyureki_from_ymd_impl(PyTypeObject *type, int year, int month, int day,
 qreki.Kyureki.from_date as Kyureki_from_date
 
     date: object
-    tz: double(c_default="QREKI_JST_TZ") = qreki.jst_tz
+    tz: double(c_default="QREKI_JST_TZ") = qreki.TZ
 [clinic start generated code]*/
 
 static PyObject *
 Kyureki_from_date_impl(PyTypeObject *type, PyObject *date, double tz)
-/*[clinic end generated code: output=dbadf5ced65b3615 input=573a0c1a13d672fd]*/
+/*[clinic end generated code: output=dbadf5ced65b3615 input=54443fe0a3ed7d36]*/
 {
     PyObject *t, *ret;
 
@@ -805,12 +804,12 @@ kyureki_from_date_inner(PyObject *date, double tz)
 qreki.from_date
 
     date: object
-    tz: double(c_default="QREKI_JST_TZ") = qreki.jst_tz
+    tz: double(c_default="QREKI_JST_TZ") = qreki.TZ
 [clinic start generated code]*/
 
 static PyObject *
 qreki_from_date_impl(PyObject *module, PyObject *date, double tz)
-/*[clinic end generated code: output=783829c685363b80 input=3b7a570b4d4550fd]*/
+/*[clinic end generated code: output=783829c685363b80 input=9dbb35c312192ad4]*/
 {
     return kyureki_from_date_inner(date, tz);
 }
@@ -831,8 +830,6 @@ static int module_exec(PyObject *module)
     PyObject *str_leap_template = NULL;
     PyObject *datetime_module = NULL;
     PyObject *date_type = NULL;
-
-    if (PyModule_AddObject(module, "jst_tz", PyFloat_FromDouble(jst_tz))) { goto cleanup; }
 
     kyureki_type = PyType_FromSpec(&Kyureki_Type_spec);
     if (!kyureki_type) { goto cleanup; }

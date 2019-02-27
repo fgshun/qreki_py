@@ -3,7 +3,7 @@ preserve
 [clinic start generated code]*/
 
 PyDoc_STRVAR(Kyureki_from_ymd__doc__,
-"from_ymd($type, /, year, month, day, tz=qreki.jst_tz)\n"
+"from_ymd($type, /, year, month, day, tz=qreki.TZ)\n"
 "--\n"
 "\n");
 
@@ -36,7 +36,7 @@ exit:
 }
 
 PyDoc_STRVAR(Kyureki_from_date__doc__,
-"from_date($type, /, date, tz=qreki.jst_tz)\n"
+"from_date($type, /, date, tz=qreki.TZ)\n"
 "--\n"
 "\n");
 
@@ -91,7 +91,7 @@ exit:
 }
 
 PyDoc_STRVAR(qreki_from_date__doc__,
-"from_date($module, /, date, tz=qreki.jst_tz)\n"
+"from_date($module, /, date, tz=qreki.TZ)\n"
 "--\n"
 "\n");
 
@@ -119,4 +119,4 @@ qreki_from_date(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObj
 exit:
     return return_value;
 }
-/*[clinic end generated code: output=6febc5c44a23b340 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=c3e844240b6c1d2b input=a9049054013a1b77]*/
