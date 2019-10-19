@@ -25,6 +25,8 @@ pip install git+https://github.com/fgshun/qreki_py#egg=qreki
 
 ### Install on Windows
 ```
+# Python 3.8
+pip install https://github.com/fgshun/qreki_py/releases/download/v0.5.1/qreki-0.5.1-cp38-cp38-win_amd64.whl
 # Python 3.7
 pip install https://github.com/fgshun/qreki_py/releases/download/v0.5.1/qreki-0.5.1-cp37-cp37m-win_amd64.whl
 # Python 3.6
