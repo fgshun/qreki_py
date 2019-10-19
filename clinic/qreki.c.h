@@ -61,9 +61,15 @@ Kyureki_from_ymd(PyTypeObject *type, PyObject *const *args, Py_ssize_t nargs, Py
     if (!noptargs) {
         goto skip_optional_pos;
     }
-    tz = PyFloat_AsDouble(args[3]);
-    if (PyErr_Occurred()) {
-        goto exit;
+    if (PyFloat_CheckExact(args[3])) {
+        tz = PyFloat_AS_DOUBLE(args[3]);
+    }
+    else
+    {
+        tz = PyFloat_AsDouble(args[3]);
+        if (tz == -1.0 && PyErr_Occurred()) {
+            goto exit;
+        }
     }
 skip_optional_pos:
     return_value = Kyureki_from_ymd_impl(type, year, month, day, tz);
@@ -102,9 +108,15 @@ Kyureki_from_date(PyTypeObject *type, PyObject *const *args, Py_ssize_t nargs, P
     if (!noptargs) {
         goto skip_optional_pos;
     }
-    tz = PyFloat_AsDouble(args[1]);
-    if (PyErr_Occurred()) {
-        goto exit;
+    if (PyFloat_CheckExact(args[1])) {
+        tz = PyFloat_AS_DOUBLE(args[1]);
+    }
+    else
+    {
+        tz = PyFloat_AsDouble(args[1]);
+        if (tz == -1.0 && PyErr_Occurred()) {
+            goto exit;
+        }
     }
 skip_optional_pos:
     return_value = Kyureki_from_date_impl(type, date, tz);
@@ -267,9 +279,15 @@ qreki_from_date(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObj
     if (!noptargs) {
         goto skip_optional_pos;
     }
-    tz = PyFloat_AsDouble(args[1]);
-    if (PyErr_Occurred()) {
-        goto exit;
+    if (PyFloat_CheckExact(args[1])) {
+        tz = PyFloat_AS_DOUBLE(args[1]);
+    }
+    else
+    {
+        tz = PyFloat_AsDouble(args[1]);
+        if (tz == -1.0 && PyErr_Occurred()) {
+            goto exit;
+        }
     }
 skip_optional_pos:
     return_value = qreki_from_date_impl(module, date, tz);
@@ -277,4 +295,4 @@ skip_optional_pos:
 exit:
     return return_value;
 }
-/*[clinic end generated code: output=c0b33488f9dc923e input=a9049054013a1b77]*/
+/*[clinic end generated code: output=86cb17cfcc39c7ca input=a9049054013a1b77]*/
