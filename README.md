@@ -20,7 +20,7 @@
 
 ## Install
 ```
-pip install git+https://github.com/fgshun/qreki_py#egg=qreki
+pip install git+https://github.com/fgshun/qreki_py.git@v0.5.1
 ```
 
 ### Install on Windows
