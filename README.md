@@ -20,11 +20,13 @@
 
 ## Install
 ```
-pip install git+https://github.com/fgshun/qreki_py#egg=qreki
+pip install git+https://github.com/fgshun/qreki_py.git@v0.5.1#egg=qreki
 ```
 
 ### Install on Windows
 ```
+# Python 3.9
+pip install https://github.com/fgshun/qreki_py/releases/download/v0.5.1/qreki-0.5.1-cp39-cp39-win_amd64.whl
 # Python 3.8
 pip install https://github.com/fgshun/qreki_py/releases/download/v0.5.1/qreki-0.5.1-cp38-cp38-win_amd64.whl
 # Python 3.7
