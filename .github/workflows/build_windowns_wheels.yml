@@ -1,0 +1,30 @@
+name: Build windows wheels
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build wheels
+      shell: cmd
+      run: |
+        py -3.10 -m pip install -U setuptools wheel pip
+        py -3.10 setup.py bdist_wheel
+        py -3.9 -m pip install -U setuptools wheel pip
+        py -3.9 setup.py bdist_wheel
+        py -3.8 -m pip install -U setuptools wheel pip
+        py -3.8 setup.py bdist_wheel
+        py -3.7 -m pip install -U setuptools wheel pip
+        py -3.7 setup.py bdist_wheel
+        py -3.6 -m pip install -U setuptools wheel pip
+        py -3.6 setup.py bdist_wheel
+    - name: Upload Wheel
+      uses: actions/upload-artifact@v2
+      with:
+        name: win-wheels
+        path: dist/*.whl
