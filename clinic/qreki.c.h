@@ -8,7 +8,7 @@ PyDoc_STRVAR(Kyureki_from_ymd__doc__,
 "\n");
 
 #define KYUREKI_FROM_YMD_METHODDEF    \
-    {"from_ymd", (PyCFunction)(void(*)(void))Kyureki_from_ymd, METH_FASTCALL|METH_KEYWORDS|METH_CLASS, Kyureki_from_ymd__doc__},
+    {"from_ymd", _PyCFunction_CAST(Kyureki_from_ymd), METH_FASTCALL|METH_KEYWORDS|METH_CLASS, Kyureki_from_ymd__doc__},
 
 static PyObject *
 Kyureki_from_ymd_impl(PyTypeObject *type, int year, int month, int day,
@@ -31,27 +31,12 @@ Kyureki_from_ymd(PyTypeObject *type, PyObject *const *args, Py_ssize_t nargs, Py
     if (!args) {
         goto exit;
     }
-    if (PyFloat_Check(args[0])) {
-        PyErr_SetString(PyExc_TypeError,
-                        "integer argument expected, got float" );
-        goto exit;
-    }
     year = _PyLong_AsInt(args[0]);
     if (year == -1 && PyErr_Occurred()) {
         goto exit;
     }
-    if (PyFloat_Check(args[1])) {
-        PyErr_SetString(PyExc_TypeError,
-                        "integer argument expected, got float" );
-        goto exit;
-    }
     month = _PyLong_AsInt(args[1]);
     if (month == -1 && PyErr_Occurred()) {
-        goto exit;
-    }
-    if (PyFloat_Check(args[2])) {
-        PyErr_SetString(PyExc_TypeError,
-                        "integer argument expected, got float" );
         goto exit;
     }
     day = _PyLong_AsInt(args[2]);
@@ -84,7 +69,7 @@ PyDoc_STRVAR(Kyureki_from_date__doc__,
 "\n");
 
 #define KYUREKI_FROM_DATE_METHODDEF    \
-    {"from_date", (PyCFunction)(void(*)(void))Kyureki_from_date, METH_FASTCALL|METH_KEYWORDS|METH_CLASS, Kyureki_from_date__doc__},
+    {"from_date", _PyCFunction_CAST(Kyureki_from_date), METH_FASTCALL|METH_KEYWORDS|METH_CLASS, Kyureki_from_date__doc__},
 
 static PyObject *
 Kyureki_from_date_impl(PyTypeObject *type, PyObject *date, double tz);
@@ -147,11 +132,6 @@ Kyureki_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     if (!fastargs) {
         goto exit;
     }
-    if (PyFloat_Check(fastargs[0])) {
-        PyErr_SetString(PyExc_TypeError,
-                        "integer argument expected, got float" );
-        goto exit;
-    }
     {
         long ival = PyLong_AsLong(fastargs[0]);
         if (ival == -1 && PyErr_Occurred()) {
@@ -170,11 +150,6 @@ Kyureki_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         else {
             year = (short) ival;
         }
-    }
-    if (PyFloat_Check(fastargs[1])) {
-        PyErr_SetString(PyExc_TypeError,
-                        "integer argument expected, got float" );
-        goto exit;
     }
     {
         long ival = PyLong_AsLong(fastargs[1]);
@@ -195,11 +170,6 @@ Kyureki_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
             month = (unsigned char) ival;
         }
     }
-    if (PyFloat_Check(fastargs[2])) {
-        PyErr_SetString(PyExc_TypeError,
-                        "integer argument expected, got float" );
-        goto exit;
-    }
     {
         long ival = PyLong_AsLong(fastargs[2]);
         if (ival == -1 && PyErr_Occurred()) {
@@ -218,11 +188,6 @@ Kyureki_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         else {
             leap_month = (unsigned char) ival;
         }
-    }
-    if (PyFloat_Check(fastargs[3])) {
-        PyErr_SetString(PyExc_TypeError,
-                        "integer argument expected, got float" );
-        goto exit;
     }
     {
         long ival = PyLong_AsLong(fastargs[3]);
@@ -255,7 +220,7 @@ PyDoc_STRVAR(qreki_from_date__doc__,
 "\n");
 
 #define QREKI_FROM_DATE_METHODDEF    \
-    {"from_date", (PyCFunction)(void(*)(void))qreki_from_date, METH_FASTCALL|METH_KEYWORDS, qreki_from_date__doc__},
+    {"from_date", _PyCFunction_CAST(qreki_from_date), METH_FASTCALL|METH_KEYWORDS, qreki_from_date__doc__},
 
 static PyObject *
 qreki_from_date_impl(PyObject *module, PyObject *date, double tz);
@@ -295,4 +260,4 @@ skip_optional_pos:
 exit:
     return return_value;
 }
-/*[clinic end generated code: output=86cb17cfcc39c7ca input=a9049054013a1b77]*/
+/*[clinic end generated code: output=3307ab25b7a7b6e1 input=a9049054013a1b77]*/
