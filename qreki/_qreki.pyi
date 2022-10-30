@@ -47,11 +47,3 @@ class Kyureki:
 
     def __ge__(self, other: Kyureki) -> bool:
         ...
-
-
-def rokuyou_from_ymd(year: int, month: int, day: int) -> Kyureki:
-    ...
-
-
-def rokuyou_from_date(date: datetime.date) -> Kyureki:
-    ...

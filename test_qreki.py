@@ -3,7 +3,7 @@ import datetime
 import pytest
 
 import qreki
-from qreki.qreki import Kyureki, _Kyureki  # type: ignore
+from qreki.qreki import Kyureki, _Kyureki
 
 classes = [_Kyureki]
 ids = ['python']
