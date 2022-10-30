@@ -3,11 +3,13 @@ import datetime
 import pytest
 
 import qreki
+from qreki.qreki import Kyureki, _Kyureki
 
-classes = [qreki._Kyureki]
+
+classes = [_Kyureki]
 ids = ['python']
-if qreki._Kyureki is not qreki.Kyureki:
-    classes.append(qreki.Kyureki)
+if _Kyureki is not Kyureki:
+    classes.append(Kyureki)
     ids.append('c_extension')
 
 
@@ -31,12 +33,12 @@ def dates_iter():
 
 
 def test_diff_cextension_purepython(dates_iter):
-    if qreki._Kyureki is qreki.Kyureki:
+    if _Kyureki is Kyureki:
         pytest.skip("c extension is not installed")
 
     for date in dates_iter:
-        p = qreki.Kyureki.from_date(date)
-        c = qreki._Kyureki.from_date(date)
+        p = Kyureki.from_date(date)
+        c = _Kyureki.from_date(date)
         assert p.year == c.year
         assert p.month == c.month
         assert p.leap_month == c.leap_month
