@@ -1,6 +1,12 @@
 import argparse
+import datetime
 
-from .qreki import Kyureki
+from qreki import VERSION, Kyureki
+
+
+def _print_date(shinreki, kyureki):
+    print('{0.year:d}年{0.month:d}月{0.day:d}日 {1}'.format(
+          shinreki, kyureki))
 
 
 def main():
@@ -12,10 +18,6 @@ def main():
                         action='version',
                         version='%(prog)s ' + VERSION)
     args = parser.parse_args()
-
-    def _print_date(shinreki, kyureki):
-        print('{0.year:d}年{0.month:d}月{0.day:d}日 {1}'.format(
-              shinreki, kyureki))
 
     if args.year is None:
         d = datetime.date.today()
