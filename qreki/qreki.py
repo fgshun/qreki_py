@@ -1,57 +1,11 @@
+from __future__ import annotations
+
 import datetime
 import math
+from typing import Sequence
 
-"""新暦、旧暦変換 qreki.py
-
-ある新暦より対応する旧暦と六曜を算出します。
-
-使用例
-```
->>> from qreki import Kyureki
->>> k = Kyureki.from_ymd(2017, 10, 17)
->>> str(k)
-'2017年8月28日'
->>> k.rokuyou
-'大安'
->>> from datetime import date
->>> d = date(2017, 10, 21)
->>> k = Kyureki.from_date(d)
->>> str(k)
-'2017年9月2日'
->>> k.rokuyou
-'仏滅'
-```
-
-qreki.py の元となった QREKI.AWK について
-qreki.py で用いている旧暦算出方法は高野 英明氏の QREKI.AWK から得たものです。
-
-旧暦計算サンプルプログラム  $Revision:   1.1  $
-Coded by H.Takano 1993,1994
-http://www.vector.co.jp/soft/dos/personal/se016093.html
-
-QREKI.AWK と qreki.py は新暦1年1月1日から9999年12月31日までの間で
-同じ結果が得られることを確認しています。
-過去や遠い未来にたいして適用する是非はともかく。
-
-配布規定に従い QREKI.AWK と QREKI.DOC を同梱します。
-QREKI.DOC には計算方法だけでなく、扱う暦と天保暦との相違点、
-六曜、朔、二十四節気、ユリウス通日など多数の知見が含まれています。
-
-
-Copyright (C) fgshun 2009, 2017
-https://github.com/fgshun/qreki_py
-http://d.hatena.ne.jp/fgshun/
-"""
-
-VERSION_INFO = (0, 5, 2)
-VERSION = '.'.join(map(str, VERSION_INFO))
-ORGINAL_VERSION_INFO = (1, 1)
-ORGINAL_VERSION = '.'.join(map(str, ORGINAL_VERSION_INFO))
-
-DEG_TO_RAD = math.pi / 180.0  # （角度の）度からラジアンに変換する係数
-TZ = 0.375  # +9.0/24.0 (JST)
-
-__all__ = ['Kyureki', 'rokuyou_from_ymd', 'rokuyou_from_date']
+DEG_TO_RAD: float = math.pi / 180.0  # （角度の）度からラジアンに変換する係数
+TZ: float = 0.375  # +9.0/24.0 (JST)
 
 
 class Kyureki:
@@ -59,9 +13,13 @@ class Kyureki:
 
     __slots__ = ('_year', '_month', '_leap_month', '_day')
 
-    ROKUYOU = ('大安', '赤口', '先勝', '友引', '先負', '仏滅')
+    ROKUYOU: Sequence[str] = ('大安', '赤口', '先勝', '友引', '先負', '仏滅')
+    _year: int
+    _month: int
+    _leap_month: int
+    _day: int
 
-    def __new__(cls, year, month, leap_month, day):
+    def __new__(cls, year: int, month: int, leap_month: int, day: int) -> Kyureki:
         self = super().__new__(cls)
         self._year = year
         self._month = month
@@ -71,60 +29,60 @@ class Kyureki:
         return self
 
     @classmethod
-    def from_ymd(cls, year, month, day, tz=TZ):
+    def from_ymd(cls, year: int, month: int, day: int, tz: float = TZ) -> Kyureki:
         """新暦を表す 3 整数より旧暦を得る"""
 
         date = datetime.date(year, month, day)
         return cls.from_date(date, tz)
 
     @classmethod
-    def from_date(cls, date, tz=TZ):
+    def from_date(cls, date: datetime.date, tz: float = TZ) -> Kyureki:
         """datetime.date より旧暦を得る"""
         kyureki = _kyureki_from_date(date, tz)
         return cls(*kyureki)
 
     @property
-    def year(self):
+    def year(self) -> int:
         """旧暦の年"""
         return self._year
 
     @property
-    def month(self):
+    def month(self) -> int:
         """旧暦の月"""
         return self._month
 
     @property
-    def leap_month(self):
+    def leap_month(self) -> int:
         """閏月フラグ
 
         0 ならば通常の月、 1 ならば閏月を表す。"""
         return self._leap_month
 
     @property
-    def day(self):
+    def day(self) -> int:
         """旧暦の日"""
         return self._day
 
     @property
-    def rokuyou(self):
+    def rokuyou(self) -> str:
         """六曜を得る
 
         戻り値は六曜 (大安, 赤口, 先勝, 友引, 先負, 仏滅) の文字列。"""
         return self.ROKUYOU[(self.month + self.day) % 6]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '{:s}({:d}, {:d}, {:d}, {:d})'.format(
                 type(self).__name__,
                 self._year, self._month, self._leap_month, self._day)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '{:d}年{:s}{:d}月{:d}日'.format(
                 self._year,
                 '閏' if self._leap_month else '',
                 self._month,
                 self._day)
 
-    def __lt__(self, other):
+    def __lt__(self, other: Kyureki) -> bool:
         if not isinstance(other, type(self)):
             return NotImplemented
 
@@ -142,7 +100,7 @@ class Kyureki:
             return False
         return self._day < other._day
 
-    def __le__(self, other):
+    def __le__(self, other: Kyureki) -> bool:
         if not isinstance(other, type(self)):
             return NotImplemented
 
@@ -160,7 +118,7 @@ class Kyureki:
             return False
         return self._day <= other._day
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
             return NotImplemented
 
@@ -169,7 +127,7 @@ class Kyureki:
                 self._leap_month == other._leap_month and
                 self._day == other._day)
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
             return NotImplemented
 
@@ -178,7 +136,7 @@ class Kyureki:
                 self._leap_month != other._leap_month or
                 self._day != other._day)
 
-    def __gt__(self, other):
+    def __gt__(self, other: Kyureki) -> bool:
         if not isinstance(other, type(self)):
             return NotImplemented
 
@@ -196,7 +154,7 @@ class Kyureki:
             return False
         return self._day > other._day
 
-    def __ge__(self, other):
+    def __ge__(self, other: Kyureki) -> bool:
         if not isinstance(other, type(self)):
             return NotImplemented
 
@@ -214,11 +172,11 @@ class Kyureki:
             return False
         return self._day >= other._day
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self._year, self._month, self._leap_month, self._day))
 
 
-def _kyureki_from_date(date, tz):
+def _kyureki_from_date(date: datetime.date, tz: float):
     """新暦に対応する、旧暦を求める
 
     引数:
@@ -286,9 +244,9 @@ def _kyureki_from_date(date, tz):
     # m[i][0] ... 月名（1:正月 2:２月 3:３月 ....）
     # m[i][1] ... 閏フラグ（0:平月 1:閏月）
     # m[i][2] ... 朔日のjd
-    m = []
+    m: list[list[int]] = []
     for i in range(5):
-        m.append([None, None, None])
+        m.append([0, 0, 0])
 
     m[0][0] = int(chu[0][1] / 30.0) + 2
     m[0][1] = 0
@@ -339,7 +297,7 @@ def _kyureki_from_date(date, tz):
     return kyureki_year, kyureki_month, kyureki_leap, kyureki_day
 
 
-def _chuki_from_jd(tm, tz):
+def _chuki_from_jd(tm: float, tz: float):
     """中気の時刻を求める
 
     引数:
@@ -392,7 +350,7 @@ def _chuki_from_jd(tm, tz):
     return (tm1 + tm2 + tz, rm_sun0)
 
 
-def _before_nibun_from_jd(tm, tz):
+def _before_nibun_from_jd(tm: float, tz: float):
     """直前の二分二至の時刻を求める
 
     引数:
@@ -448,7 +406,7 @@ def _before_nibun_from_jd(tm, tz):
     return (tm1 + tm2 + tz, rm_sun0)
 
 
-def _saku_from_jd(tm, tz):
+def _saku_from_jd(tm: float, tz: float):
     """与えられた時刻の直近の朔の時刻（JST）を求める
 
     引数:
@@ -520,7 +478,7 @@ def _saku_from_jd(tm, tz):
     return tm1 + tm2 + tz
 
 
-def _longitude_of_sun(t):
+def _longitude_of_sun(t: float):
     """太陽の黄経 λsun を計算する
 
     引数:
@@ -572,7 +530,7 @@ def _longitude_of_sun(t):
     return th
 
 
-def _longitude_of_moon(t):
+def _longitude_of_moon(t: float):
     """月の黄経 λmoon を計算する
 
     引数:
@@ -717,13 +675,13 @@ def _longitude_of_moon(t):
 # スピードアップ用の C 言語版が存在すればそちらを使う
 _Kyureki = Kyureki
 try:
-    import _qreki
-    Kyureki = _qreki.Kyureki
+    import qreki._qreki
+    Kyureki = qreki._qreki.Kyureki  # type: ignore
 except ImportError:
     pass
 
 
-def rokuyou_from_ymd(year, month, day):
+def rokuyou_from_ymd(year: int, month: int, day: int) -> str:
     """六曜算出ショートカット
 
     引数:
@@ -739,7 +697,7 @@ def rokuyou_from_ymd(year, month, day):
     return kyureki.rokuyou
 
 
-def rokuyou_from_date(date):
+def rokuyou_from_date(date: datetime.date) -> str:
     """六曜算出ショートカット
     引数:
         datetime.date （新暦）
@@ -752,50 +710,3 @@ def rokuyou_from_date(date):
     これの rokuyou() メソッドを呼ぶほうが効率がよい。"""
     kyureki = Kyureki.from_date(date)
     return kyureki.rokuyou
-
-
-def main():
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('year', nargs='?', type=int)
-    parser.add_argument('month', nargs='?', type=int)
-    parser.add_argument('day', nargs='?', type=int)
-    parser.add_argument('--version',
-                        action='version',
-                        version='%(prog)s ' + VERSION)
-    args = parser.parse_args()
-
-    def _print_date(shinreki, kyureki):
-        print('{0.year:d}年{0.month:d}月{0.day:d}日 {1}'.format(
-              shinreki, kyureki))
-
-    if args.year is None:
-        d = datetime.date.today()
-        k = Kyureki.from_date(d)
-        _print_date(d, k)
-
-    elif args.month is None:
-        d = datetime.date(args.year, 1, 1)
-        d1 = datetime.timedelta(1)
-        while d.year == args.year:
-            k = Kyureki.from_date(d)
-            _print_date(d, k)
-            d += d1
-
-    elif args.day is None:
-        d = datetime.date(args.year, args.month, 1)
-        d1 = datetime.timedelta(1)
-        while d.month == args.month:
-            k = Kyureki.from_date(d)
-            _print_date(d, k)
-            d += d1
-
-    else:
-        d = datetime.date(args.year, args.month, args.day)
-        k = Kyureki.from_date(d)
-        _print_date(d, k)
-
-
-if __name__ == '__main__':
-    main()

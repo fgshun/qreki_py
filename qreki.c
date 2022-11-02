@@ -1,6 +1,8 @@
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <datetime.h>
 #include <structmember.h>
+#include <datetime.h>
 
 typedef struct {
     PyObject_HEAD
@@ -9,6 +11,21 @@ typedef struct {
     unsigned char leap_month;
     unsigned char day;
 } KyurekiObject;
+
+static PyObject *
+Kyureki_rokuyou(KyurekiObject *self, PyObject *args);
+static PyObject *
+Kyureki_new(PyTypeObject *subtype, PyObject *args, PyObject *kwargs);
+static void
+Kyureki_dealloc(KyurekiObject *self);
+static PyObject *
+Kyureki_repr(KyurekiObject *self);
+static PyObject *
+Kyureki_str(KyurekiObject *self);
+static PyObject *
+Kyureki_richcompare(KyurekiObject *self, KyurekiObject *other, int op);
+static Py_hash_t
+Kyureki_hash(KyurekiObject *self);
 
 /*[clinic input]
 module qreki
@@ -34,8 +51,7 @@ longitude_of_moon(double t);
 static void
 jd2yearmonth(double jd, int *year, int *month);
 
-static PyObject *
-kyureki_from_date_inner(PyObject *date, double tz);
+static int module_exec(PyObject *module);
 
 static const double degToRad = Py_MATH_PI / 180.0;
 #define QREKI_JST_TZ 0.375
@@ -70,9 +86,8 @@ Kyureki_from_ymd_impl(PyTypeObject *type, int year, int month, int day,
     PyObject *date;
     PyObject *self;
 
-    if (!(date = PyDate_FromDate(year, month, day))) {
-        return NULL;
-    }
+    date = PyDate_FromDate(year, month, day);
+    if (!date) { return NULL; }
 
     self = Kyureki_from_date_impl(type, date, tz);
     Py_DECREF(date);
@@ -93,9 +108,26 @@ Kyureki_from_date_impl(PyTypeObject *type, PyObject *date, double tz)
 /*[clinic end generated code: output=dbadf5ced65b3615 input=54443fe0a3ed7d36]*/
 {
     PyObject *t, *ret;
+    long ordinal, tm0;
+    PyObject *ordinal_obj;
+    int kyureki_year, kyureki_month, kyureki_leap, kyureki_day, error;
 
-    t = kyureki_from_date_inner(date, tz);
-    if (!t) { return t; }
+    if ((ordinal_obj = PyObject_CallMethod(date, "toordinal", NULL)) == NULL) {
+        return NULL;
+    }
+    ordinal = PyLong_AsLong(ordinal_obj);
+    Py_DECREF(ordinal_obj);
+    if (PyErr_Occurred()) { return NULL; }
+
+    tm0 = ordinal + 1721424;
+
+    error = kyureki_from_jd(tm0, tz, &kyureki_year, &kyureki_month,
+                            &kyureki_leap, &kyureki_day);
+    if (error) { return NULL; }
+
+    t = Py_BuildValue("hbbb", kyureki_year, kyureki_month, kyureki_leap,
+                      kyureki_day);
+    if (!t) { return NULL; }
 
     ret = Kyureki_new(type, t, NULL);
     Py_DECREF(t);
@@ -775,52 +807,6 @@ jd2yearmonth(double jd, int *year, int *month)
 }
 
 
-static PyObject *
-kyureki_from_date_inner(PyObject *date, double tz)
-{
-    long ordinal, tm0;
-    PyObject *ordinal_obj;
-    int kyureki_year, kyureki_month, kyureki_leap, kyureki_day, error;
-
-    if ((ordinal_obj = PyObject_CallMethod(date, "toordinal", NULL)) == NULL) {
-        return NULL;
-    }
-    ordinal = PyLong_AsLong(ordinal_obj);
-    Py_DECREF(ordinal_obj);
-    if (PyErr_Occurred()) { return NULL; }
-
-    tm0 = ordinal + 1721424;
-
-    error = kyureki_from_jd(tm0, tz, &kyureki_year, &kyureki_month,
-                            &kyureki_leap, &kyureki_day);
-    if (error) { return NULL; }
-
-    return Py_BuildValue("hbbb", kyureki_year, kyureki_month, kyureki_leap,
-                         kyureki_day);
-}
-
-
-/*[clinic input]
-qreki.from_date
-
-    date: object
-    tz: double(c_default="QREKI_JST_TZ") = qreki.TZ
-[clinic start generated code]*/
-
-static PyObject *
-qreki_from_date_impl(PyObject *module, PyObject *date, double tz)
-/*[clinic end generated code: output=783829c685363b80 input=9dbb35c312192ad4]*/
-{
-    return kyureki_from_date_inner(date, tz);
-}
-
-
-static PyMethodDef module_methods[] = {
-    QREKI_FROM_DATE_METHODDEF
-    {NULL, NULL, 0, NULL} /* Sentinel */
-};
-
-
 static int module_exec(PyObject *module)
 {
     int ret = -1;
@@ -828,8 +814,6 @@ static int module_exec(PyObject *module)
     PyObject *rokuyou = NULL;
     PyObject *str_template = NULL;
     PyObject *str_leap_template = NULL;
-    PyObject *datetime_module = NULL;
-    PyObject *date_type = NULL;
 
     kyureki_type = PyType_FromSpec(&Kyureki_Type_spec);
     if (!kyureki_type) { goto cleanup; }
@@ -854,8 +838,6 @@ static int module_exec(PyObject *module)
     if (!(PyDateTime_IMPORT)) { goto cleanup; }
     ret = 0;
 cleanup:
-    Py_XDECREF(date_type);
-    Py_XDECREF(datetime_module);
     Py_XDECREF(str_leap_template);
     Py_XDECREF(str_template);
     Py_XDECREF(rokuyou);
@@ -875,12 +857,12 @@ static PyModuleDef_Slot module_slots[] = {
 static struct PyModuleDef qreki_module = {
     PyModuleDef_HEAD_INIT,
     .m_name = "_qreki",
-    .m_methods = module_methods,
     .m_slots = module_slots,
 };
 
 
 PyMODINIT_FUNC PyInit__qreki(void)
 {
+    if (!(PyDateTime_IMPORT)) { return NULL; }
     return PyModuleDef_Init(&qreki_module);
 }
