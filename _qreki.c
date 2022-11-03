@@ -56,7 +56,7 @@ static int module_exec(PyObject *module);
 static const double degToRad = Py_MATH_PI / 180.0;
 #define QREKI_JST_TZ 0.375
 
-#include "clinic/qreki.c.h"
+#include "clinic/_qreki.c.h"
 
 
 static PyMemberDef Kyureki_members[] = {
