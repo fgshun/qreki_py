@@ -15,10 +15,6 @@ jobs:
       run: |
         py -3.11 -m pip install -U setuptools wheel pip
         py -3.11 setup.py bdist_wheel
-        py -3.10 -m pip install -U setuptools wheel pip
-        py -3.10 setup.py bdist_wheel
-        py -3.9 -m pip install -U setuptools wheel pip
-        py -3.9 setup.py bdist_wheel
     - name: Upload Wheel
       uses: actions/upload-artifact@v3
       with:
