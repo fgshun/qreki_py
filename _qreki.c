@@ -107,7 +107,7 @@ static PyObject *
 Kyureki_from_date_impl(PyTypeObject *type, PyObject *date, double tz)
 /*[clinic end generated code: output=dbadf5ced65b3615 input=54443fe0a3ed7d36]*/
 {
-    PyObject *t, *ret;
+    PyObject *ret;
     long ordinal, tm0;
     PyObject *ordinal_obj;
     int kyureki_year, kyureki_month, kyureki_leap, kyureki_day, error;
@@ -125,12 +125,7 @@ Kyureki_from_date_impl(PyTypeObject *type, PyObject *date, double tz)
                             &kyureki_leap, &kyureki_day);
     if (error) { return NULL; }
 
-    t = Py_BuildValue("hbbb", kyureki_year, kyureki_month, kyureki_leap,
-                      kyureki_day);
-    if (!t) { return NULL; }
-
-    ret = Kyureki_new(type, t, NULL);
-    Py_DECREF(t);
+    ret = Kyureki_new_impl(type, kyureki_year, kyureki_month, kyureki_leap, kyureki_day);
     return ret;
 }
 
