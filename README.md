@@ -26,17 +26,11 @@ pip install git+https://github.com/fgshun/qreki_py.git@v0.5.1#egg=qreki
 ### Install on Windows
 ```
 # Python 3.11
-pip install https://github.com/fgshun/qreki_py/releases/download/v0.5.1/qreki-0.5.1-cp311-cp311-win_amd64.whl
+pip install https://github.com/fgshun/qreki_py/releases/download/v0.6.0/qreki-0.6.0-cp311-cp311-win_amd64.whl
 # Python 3.10
-pip install https://github.com/fgshun/qreki_py/releases/download/v0.5.1/qreki-0.5.1-cp310-cp310-win_amd64.whl
+pip install https://github.com/fgshun/qreki_py/releases/download/v0.6.0/qreki-0.6.0-cp310-cp310-win_amd64.whl
 # Python 3.9
-pip install https://github.com/fgshun/qreki_py/releases/download/v0.5.1/qreki-0.5.1-cp39-cp39-win_amd64.whl
-# Python 3.8
-pip install https://github.com/fgshun/qreki_py/releases/download/v0.5.1/qreki-0.5.1-cp38-cp38-win_amd64.whl
-# Python 3.7
-pip install https://github.com/fgshun/qreki_py/releases/download/v0.5.1/qreki-0.5.1-cp37-cp37m-win_amd64.whl
-# Python 3.6
-pip install https://github.com/fgshun/qreki_py/releases/download/v0.5.1/qreki-0.5.1-cp36-cp36m-win_amd64.whl
+pip install https://github.com/fgshun/qreki_py/releases/download/v0.6.0/qreki-0.6.0-cp39-cp39-win_amd64.whl
 ```
 
 ## qreki.py の元となった QREKI.AWK について
