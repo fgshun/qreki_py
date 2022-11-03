@@ -20,6 +20,3 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
 qreki = ["py.typed", "*.pyi"]
-
-[options]
-packages = "qreki"
