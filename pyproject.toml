@@ -1,0 +1,25 @@
+[project]
+name = "qreki"
+version = "0.6.0"
+authors = [
+  { name="fgshun", email="fgshun@gmail.com" },
+]
+description = "ある新暦より対応する旧暦と六曜を算出します"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Private :: Do Not Upload",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/fgshun/qreki_py"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+qreki = ["py.typed", "*.pyi"]
+
+[options]
+packages = "qreki"
