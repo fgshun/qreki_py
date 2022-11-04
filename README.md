@@ -20,7 +20,7 @@
 
 ## Install
 ```
-pip install git+https://github.com/fgshun/qreki_py.git@v0.5.1#egg=qreki
+pip install git+https://github.com/fgshun/qreki_py.git@v0.6.0#egg=qreki
 ```
 
 ### Install on Windows
@@ -49,6 +49,6 @@ QREKI.DOC には計算方法だけでなく、扱う暦と天保暦との相違�
 六曜、朔、二十四節気、ユリウス通日など多数の知見が含まれています。
 
 
-Copyright (C) fgshun 2009, 2018
+Copyright (C) fgshun 2009, 2022
 https://github.com/fgshun/qreki_py  
 http://d.hatena.ne.jp/fgshun/
