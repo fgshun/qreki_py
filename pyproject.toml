@@ -1,6 +1,6 @@
 [project]
 name = "qreki"
-version = "0.6.0"
+version = "0.6.1"
 authors = [
   { name="fgshun", email="fgshun@gmail.com" },
 ]
@@ -20,3 +20,11 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
 qreki = ["py.typed", "*.pyi"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
