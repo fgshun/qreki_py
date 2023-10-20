@@ -13,6 +13,8 @@ jobs:
     - name: Build wheels
       shell: cmd
       run: |
+        py -3.12 -m pip install -U setuptools wheel pip
+        py -3.12 setup.py bdist_wheel
         py -3.11 -m pip install -U setuptools wheel pip
         py -3.11 setup.py bdist_wheel
         py -3.10 -m pip install -U setuptools wheel pip
