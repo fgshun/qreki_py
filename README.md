@@ -25,6 +25,8 @@ pip install git+https://github.com/fgshun/qreki_py.git@v0.6.1#egg=qreki
 
 ### Install on Windows
 ```
+# Python 3.13
+pip install https://github.com/fgshun/qreki_py/releases/download/v0.6.1/qreki-0.6.1-cp313-cp313-win_amd64.whl
 # Python 3.12
 pip install https://github.com/fgshun/qreki_py/releases/download/v0.6.1/qreki-0.6.1-cp312-cp312-win_amd64.whl
 # Python 3.11
