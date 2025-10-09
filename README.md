@@ -25,6 +25,8 @@ pip install git+https://github.com/fgshun/qreki_py.git@v0.6.1#egg=qreki
 
 ### Install on Windows
 ```
+# Python 3.14
+pip install https://github.com/fgshun/qreki_py/releases/download/v0.6.1/qreki-0.6.1-cp314-cp314-win_amd64.whl
 # Python 3.13
 pip install https://github.com/fgshun/qreki_py/releases/download/v0.6.1/qreki-0.6.1-cp313-cp313-win_amd64.whl
 # Python 3.12
@@ -38,7 +40,7 @@ pip install https://github.com/fgshun/qreki_py/releases/download/v0.6.1/qreki-0.
 ```
 
 ### Building on Windows
-Python 3.9 以降と Visual Studio 2017 以降を用意してください。 また、 環境変数 CL に /utf-8 を設定しておいてください。
+Python 3.10 以降と Visual Studio 2017 以降を用意してください。 また、 環境変数 CL に /utf-8 を設定しておいてください。
 
 ## qreki.py の元となった QREKI.AWK について
 qreki.py で用いている旧暦算出方法は高野 英明氏の QREKI.AWK から得たものです。
